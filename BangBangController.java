@@ -6,7 +6,7 @@ public class BangBangController implements UltrasonicController{
 	private final int motorLow, motorHigh;
 	private final int motorStraight = 200, FILTER_OUT = 20;
 	private final int highSpeed = 300, lowSpeed = 150;
-	private final int sensorHighSpeed = 20;
+	private final int sensorHighSpeed = 25;
 	private final int sensorLowSpeed = 8;
 	
 	private final NXTRegulatedMotor leftMotor = Motor.A, rightMotor = Motor.C, sensorMotor = Motor.B;
@@ -20,6 +20,7 @@ public class BangBangController implements UltrasonicController{
 	private int changeInDistance;
 	private int rotationCounter;
 	private int rotationCounterLimit;
+	private double sensorAngle;
 
 	
 	private int[] distanceArray = new int[10];
@@ -41,6 +42,7 @@ public class BangBangController implements UltrasonicController{
 		currentLeftSpeed = 0;
 		currentRightSpeed = 0;
 		rotationCounter=0;
+		sensorAngle=0;
 		
 	}
 	
@@ -68,85 +70,135 @@ public class BangBangController implements UltrasonicController{
 		// TODO: process a movement based on the us distance passed in (BANG-BANG style)
 	
 		changeInDistance = distanceArray[9]-distanceArray[0]; //about 1 second ago
-		currentLeftSpeed = leftMotor.getSpeed();
-		currentRightSpeed = rightMotor.getSpeed();
+		
+		
 		
 		if(Math.abs(distance - bandCenter)<=bandwidth){ //case when we are within the bandwidth
 			
-			// just keep going straight
-			leftMotor.setSpeed(motorStraight);
-			rightMotor.setSpeed(motorStraight);
-			sensorMotor.stop();
-		}
-		
-		else if(Math.abs(distance - bandCenter)<=10){ // case when within 10 cm of band center
 		
 			if(changeInDistance>1){ // moving away from wall
-				if(rotationCounter==0){
-					rotationCounterLimit = changeInDistance*5;
-				}
-				
-				if(rotationCounter<=rotationCounterLimit){
-					rightMotor.setSpeed(highSpeed);
-					leftMotor.setSpeed(lowSpeed);
-					sensorMotor.setSpeed(sensorHighSpeed);
-					sensorMotor.forward();
-					rotationCounter++;
-				}
-				
-				if(rotationCounter>rotationCounterLimit){
-					rotationCounter=0;
-					sensorMotor.stop();
-				}
+				turnForABit(rightMotor,leftMotor);
 			}
 			
 			else if(changeInDistance<-1){ // moving towards wall
-				if(rotationCounter==0){
-					rotationCounterLimit = Math.abs(changeInDistance*5);
-				}
-				
-				if(rotationCounter<=rotationCounterLimit){
-					leftMotor.setSpeed(highSpeed);
-					sensorMotor.setSpeed(sensorHighSpeed);
-					sensorMotor.backward();
-					rotationCounter++;
-				}
-				
-				if(rotationCounter>rotationCounterLimit){
-					rotationCounter=0;
-					sensorMotor.stop();
-				}
+				turnForABit(leftMotor,rightMotor);
 			}
 			
+			else{
+				// just keep going straight
+				goStraight();
+			}
 		}
+			
 		
 		else{ // further than 10cm on each side from band center
 		
 			if(distance>bandCenter){ // case when far from wall
 			
-				rightMotor.setSpeed(motorStraight);
-				leftMotor.setSpeed(lowSpeed);
+				if(sensorAngle>=60){
+					goStraight();
+				}
 				
-				sensorMotor.setSpeed(sensorLowSpeed);
-				sensorMotor.forward();
-				// TODO: we have to stop the motor from going too far
+				else{
+					
+					turnLeft();
+					
+					keepSensorParallel();
+				}
+					
+
 			}
 			
 			else if(distance<bandCenter){ // case when too close to wall
-				leftMotor.setSpeed(highSpeed);
+
+				turnRight();
 				
-				rightMotor.setSpeed(lowSpeed);
-				
-				sensorMotor.setSpeed(sensorHighSpeed);
-				sensorMotor.backward();
+				keepSensorParallel();
 				
 			}
 		}
 		
 	}
 
+	
+	
+	
+	public void turnRight(){
+		leftMotor.setSpeed(highSpeed);
+		rightMotor.setSpeed(lowSpeed);
+	}
+	
+	public void turnLeft(){
+		rightMotor.setSpeed(highSpeed);
+		leftMotor.setSpeed(lowSpeed);
+	}
+	
+	public void goStraight(){
+		leftMotor.setSpeed(motorStraight);
+		rightMotor.setSpeed(motorStraight);
+		sensorMotor.stop();
+	}
+	
+	
+	public void turnForABit(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown){
+		
+		if(rotationCounter==0){
+			rotationCounterLimit = Math.abs(changeInDistance*5);
+		}
+		
+		if(rotationCounter<=rotationCounterLimit){
+			motorToSpeedUp.setSpeed(highSpeed);
+			motorToSlowDown.setSpeed(lowSpeed);
+			keepSensorParallel();
+			rotationCounter++;
+		}
+		
+		if(rotationCounter>rotationCounterLimit){
+			rotationCounter=0;
+			sensorMotor.stop();
+		}
+		
+	}
+	
+	
+	public void keepSensorParallel(){
+		if(leftMotor.getSpeed()>rightMotor.getSpeed()){
+			sensorMotor.setSpeed(sensorHighSpeed);
+			sensorMotor.backward();
+			sensorAngle-=0.1*sensorHighSpeed;
+		}
+		
+		else{
+			sensorMotor.setSpeed(sensorHighSpeed);
+			sensorMotor.forward();
+			sensorAngle+=0.1*sensorHighSpeed;
+		}
+		
+	}
+	
+	
 	@Override
 	public int readUSDistance() {
 		return this.distance;
 	}
+	
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
