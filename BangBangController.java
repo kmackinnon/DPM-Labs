@@ -5,28 +5,20 @@ public class BangBangController implements UltrasonicController{
 	private final int bandCenter, bandwidth;
 	private final int motorLow, motorHigh;
 	private final int motorStraight = 200, FILTER_OUT = 20;
-	private final int highSpeed = 300, lowSpeed = 150;
-	private final int sensorHighSpeed = 25;
-	private final int sensorLowSpeed = 8;
 	
-	private final NXTRegulatedMotor leftMotor = Motor.A, rightMotor = Motor.C, sensorMotor = Motor.B;
+	private final NXTRegulatedMotor leftMotor = Motor.A, rightMotor = Motor.C;
 	
 	private int distance;
-	private int currentLeftSpeed;
-	private int currentRightSpeed;
-	private int newLeftSpeed;
-	private int newRightSpeed;
 	private int filterControl;
 	private int changeInDistance;
-	private int rotationCounter;
-	private int rotationCounterLimit;
-	private double sensorAngle;
+	private int rotationTime;
+	private int rotationTimeLimit;
+	private boolean programJustStarted;
+	private boolean resetRotationTime;
 
 	
 	private int[] distanceArray = new int[10];
 	
-
-	private int difference;
 	
 	public BangBangController(int bandCenter, int bandwidth, int motorLow, int motorHigh) {
 		//Default Constructor
@@ -36,13 +28,11 @@ public class BangBangController implements UltrasonicController{
 		this.motorHigh = motorHigh;
 		leftMotor.setSpeed(motorStraight);
 		rightMotor.setSpeed(motorStraight);
-		sensorMotor.setSpeed(0);
 		leftMotor.forward();
 		rightMotor.forward();
-		currentLeftSpeed = 0;
-		currentRightSpeed = 0;
-		rotationCounter=0;
-		sensorAngle=0;
+		rotationTime=0;
+		programJustStarted = true;
+		resetRotationTime= false;
 		
 	}
 	
@@ -59,64 +49,68 @@ public class BangBangController implements UltrasonicController{
 			// distance went below 255, therefore reset everything.
 			filterControl = 0;
 			this.distance = distance;
-			
-			for(int i=0;i<9;i++){
-				distanceArray[i]=distanceArray[i+1];
-			}
-			
-			distanceArray[9] = distance;
-			
 		}
 		// TODO: process a movement based on the us distance passed in (BANG-BANG style)
 	
-		changeInDistance = distanceArray[9]-distanceArray[0]; //about 1 second ago
 		
-		
-		
-		if(Math.abs(distance - bandCenter)<=bandwidth){ //case when we are within the bandwidth
+		if(distance==255){
 			
-		
-			if(changeInDistance>1){ // moving away from wall
-				turnForABit(rightMotor,leftMotor);
-			}
+			turnConvexCorner();
 			
-			else if(changeInDistance<-1){ // moving towards wall
-				turnForABit(leftMotor,rightMotor);
+		}
+		
+		else{
+			
+			if(programJustStarted){
+				for(int i=0;i<9;i++){
+					distanceArray[i]=distance;
+				}
+				programJustStarted=false;
 			}
 			
 			else{
-				// just keep going straight
-				goStraight();
+				for(int i=0;i<9;i++){
+					distanceArray[i]=distanceArray[i+1];
+				}
 			}
-		}
 			
-		
-		else{ // further than 10cm on each side from band center
-		
-			if(distance>bandCenter){ // case when far from wall
+			distanceArray[9] = distance;
+
+			changeInDistance = distanceArray[9]-distanceArray[0]; //about 1 second ago
 			
-				if(sensorAngle>=60){
-					goStraight();
+			if(Math.abs(distance - bandCenter)<=bandwidth){ //case when we are within the bandwidth
+				
+				if(changeInDistance>1){ // moving away from wall
+					turnForABit(rightMotor,leftMotor);
+				}
+				
+				else if(changeInDistance<-1){ // moving towards wall
+					turnForABit(leftMotor,rightMotor);
 				}
 				
 				else{
-					
-					turnLeft();
-					
-					keepSensorParallel();
+					// just keep going straight
+					goStraight();
 				}
-					
-
 			}
+				
 			
-			else if(distance<bandCenter){ // case when too close to wall
+			else{ // further than 10cm on each side from band center
+			
+				if(distance>bandCenter){ // case when far from wall
+	
+					turnLeft();
+						
+				}
+				
+				else if(distance<bandCenter){ // case when too close to wall
 
-				turnRight();
-				
-				keepSensorParallel();
-				
+					turnRight();
+		
+				}
 			}
 		}
+		
 		
 	}
 
@@ -124,57 +118,71 @@ public class BangBangController implements UltrasonicController{
 	
 	
 	public void turnRight(){
-		leftMotor.setSpeed(highSpeed);
-		rightMotor.setSpeed(lowSpeed);
+		rotationTimeLimit = 20;
+		
+		if(rotationTime<rotationTimeLimit){
+			leftMotor.setSpeed(motorHigh);
+			rightMotor.setSpeed(motorLow);
+			rotationTime++;
+		}
+		
+		else{
+			goStraight();
+		}
+		
+
 	}
 	
 	public void turnLeft(){
-		rightMotor.setSpeed(highSpeed);
-		leftMotor.setSpeed(lowSpeed);
+		
+		rotationTimeLimit = 20;
+		
+		if(rotationTime<rotationTimeLimit){
+			rightMotor.setSpeed(motorHigh);
+			leftMotor.setSpeed(motorLow);
+			rotationTime++;
+		}
+		
+		else{
+			goStraight();
+		}
+		
+		
 	}
 	
 	public void goStraight(){
 		leftMotor.setSpeed(motorStraight);
 		rightMotor.setSpeed(motorStraight);
-		sensorMotor.stop();
+	}
+	
+	public void turnConcaveCorner(){
+		
+	}
+	
+	public void turnConvexCorner(){
+		
 	}
 	
 	
 	public void turnForABit(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown){
 		
-		if(rotationCounter==0){
-			rotationCounterLimit = Math.abs(changeInDistance*5);
+		if(rotationTime==0){
+			rotationTimeLimit = Math.abs(changeInDistance*5);
 		}
 		
-		if(rotationCounter<=rotationCounterLimit){
-			motorToSpeedUp.setSpeed(highSpeed);
-			motorToSlowDown.setSpeed(lowSpeed);
-			keepSensorParallel();
-			rotationCounter++;
+		if(rotationTime<=rotationTimeLimit){
+			motorToSpeedUp.setSpeed(motorHigh);
+			motorToSlowDown.setSpeed(motorLow);
+			rotationTime++;
 		}
 		
-		if(rotationCounter>rotationCounterLimit){
-			rotationCounter=0;
-			sensorMotor.stop();
+		if(rotationTime>rotationTimeLimit){
+			rotationTime=0;
 		}
 		
 	}
 	
 	
-	public void keepSensorParallel(){
-		if(leftMotor.getSpeed()>rightMotor.getSpeed()){
-			sensorMotor.setSpeed(sensorHighSpeed);
-			sensorMotor.backward();
-			sensorAngle-=0.1*sensorHighSpeed;
-		}
-		
-		else{
-			sensorMotor.setSpeed(sensorHighSpeed);
-			sensorMotor.forward();
-			sensorAngle+=0.1*sensorHighSpeed;
-		}
-		
-	}
 	
 	
 	@Override

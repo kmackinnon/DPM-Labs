@@ -16,10 +16,6 @@ public class PController implements UltrasonicController {
 	private int newRightSpeed;
 	private int filterControl;
 	
-	private int difference;
-	
-	private int speedIncrement;
-	
 	public PController(int bandCenter, int bandwidth) {
 		//Default Constructor
 		this.bandCenter = bandCenter;
@@ -50,20 +46,6 @@ public class PController implements UltrasonicController {
 		}
 		// TODO: process a movement based on the us distance passed in (P style)
 		
-		
-		/*difference = distance - bandCenter;
-		currentLeftSpeed = leftMotor.getSpeed();
-		currentRightSpeed = rightMotor.getSpeed();
-		
-		if(Math.abs(difference)<=bandwidth){
-			return;
-		}
-		
-		else{
-			speedIncrement = -1*difference*multiplier;
-			newLeftSpeed = currentLeftSpeed + speedIncrement;
-			leftMotor.setSpeed(newLeftSpeed);
-		}*/
 		
 		
 	}
