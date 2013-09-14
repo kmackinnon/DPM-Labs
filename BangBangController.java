@@ -54,16 +54,14 @@ public class BangBangController implements UltrasonicController{
 	
 		
 		if(distance==255){
-			
-			turnConvexCorner();
-			
+			goStraight();
 		}
 		
 		else{
-			
+			// to keep track of the last distances from the wall
 			if(programJustStarted){
 				for(int i=0;i<9;i++){
-					distanceArray[i]=distance;
+					distanceArray[i]=distance; // set all values in array to same initial distance
 				}
 				programJustStarted=false;
 			}
@@ -75,79 +73,64 @@ public class BangBangController implements UltrasonicController{
 			}
 			
 			distanceArray[9] = distance;
-
 			changeInDistance = distanceArray[9]-distanceArray[0]; //about 1 second ago
 			
 			if(Math.abs(distance - bandCenter)<=bandwidth){ //case when we are within the bandwidth
 				
+				if(Math.abs(distanceArray[0] - bandCenter)>=bandwidth){
+					rotationTime = 0; //resets rotation time when entering bandwidth 
+				}
+				
 				if(changeInDistance>1){ // moving away from wall
-					turnForABit(rightMotor,leftMotor);
+					turn(rightMotor,leftMotor, true);
 				}
 				
 				else if(changeInDistance<-1){ // moving towards wall
-					turnForABit(leftMotor,rightMotor);
+					turn(leftMotor,rightMotor, true);
 				}
 				
 				else{
-					// just keep going straight
-					goStraight();
+					goStraight(); // just keep going straight
 				}
 			}
 				
 			
-			else{ // further than 10cm on each side from band center
-			
-				if(distance>bandCenter){ // case when far from wall
-	
-					turnLeft();
-						
+			else  if (this.distance > bandCenter){ // case when far from wall
+				if(Math.abs(distanceArray[0] - bandCenter)<=bandwidth){
+					rotationTime = 0;
 				}
+				turn(rightMotor, leftMotor, false);
 				
-				else if(distance<bandCenter){ // case when too close to wall
+			}
+			else { // case when too close to wall
+				if(Math.abs(distanceArray[0] - bandCenter)<=bandwidth){
+					rotationTime = 0;
+				}
+				turn(leftMotor,rightMotor, false);
 
-					turnRight();
 		
-				}
 			}
+		}	
+	}
+		
+	public void turn(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown, boolean inBandwidth){
+		if(!inBandwidth){
+			rotationTimeLimit = 100;
 		}
 		
+		else{ //within bandwidth
+			rotationTimeLimit = Math.abs(changeInDistance*5);
+		}
 		
-	}
-
-	
-	
-	
-	public void turnRight(){
-		rotationTimeLimit = 20;
-		
-		if(rotationTime<rotationTimeLimit){
-			leftMotor.setSpeed(motorHigh);
-			rightMotor.setSpeed(motorLow);
+		if(rotationTime < rotationTimeLimit){ //turn as long as the maximum allowed rotation has not been met
+			motorToSpeedUp.setSpeed(motorHigh);
+			motorToSlowDown.setSpeed(motorLow);
 			rotationTime++;
 		}
 		
 		else{
 			goStraight();
 		}
-		
-
-	}
-	
-	public void turnLeft(){
-		
-		rotationTimeLimit = 20;
-		
-		if(rotationTime<rotationTimeLimit){
-			rightMotor.setSpeed(motorHigh);
-			leftMotor.setSpeed(motorLow);
-			rotationTime++;
-		}
-		
-		else{
-			goStraight();
-		}
-		
-		
 	}
 	
 	public void goStraight(){
@@ -162,51 +145,11 @@ public class BangBangController implements UltrasonicController{
 	public void turnConvexCorner(){
 		
 	}
-	
-	
-	public void turnForABit(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown){
-		
-		if(rotationTime==0){
-			rotationTimeLimit = Math.abs(changeInDistance*5);
-		}
-		
-		if(rotationTime<=rotationTimeLimit){
-			motorToSpeedUp.setSpeed(motorHigh);
-			motorToSlowDown.setSpeed(motorLow);
-			rotationTime++;
-		}
-		
-		if(rotationTime>rotationTimeLimit){
-			rotationTime=0;
-		}
-		
-	}
-	
-	
-	
+
 	
 	@Override
 	public int readUSDistance() {
 		return this.distance;
 	}
-	
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
