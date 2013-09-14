@@ -1,5 +1,4 @@
 import lejos.nxt.UltrasonicSensor;
-import java.util.Timer;
 
 
 public class UltrasonicPoller extends Thread{
@@ -12,11 +11,11 @@ public class UltrasonicPoller extends Thread{
 	}
 	
 	public void run() {
-		
-		Timer timer = new Timer();
-
-		timer.schedule(new PeriodicTask(us,cont),0,100);
-		
+		while (true) {
+			//process collected data
+			cont.processUSData(us.getDistance());
+			try { Thread.sleep(100); } catch(Exception e){}
+		}
 	}
 
 }

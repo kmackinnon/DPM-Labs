@@ -12,10 +12,7 @@ public class BangBangController implements UltrasonicController{
 	
 	private int distance;
 	private int error;
-	private int delta;
 	private int countDistances;
-	private int lastDistance;
-	private int filterControl;	
 	
 	public BangBangController(int bandCenter, int bandwidth, int motorLow, int motorHigh) {
 		//Default Constructor
@@ -27,6 +24,7 @@ public class BangBangController implements UltrasonicController{
 		rightMotor.setSpeed(motorStraight);
 		leftMotor.forward();
 		rightMotor.forward();
+		
 	}
 	
 	@Override
@@ -34,7 +32,6 @@ public class BangBangController implements UltrasonicController{
 		
 		distance = distanceArgument;
 		error = distance - bandCenter;
-		//delta = Math.abs(distance - lastDistance);
 		
 		if(distance >= 255 && countDistances <= max255Count){
 			goStraight();
@@ -46,33 +43,29 @@ public class BangBangController implements UltrasonicController{
 			countDistances=0; //reset
 		}
 		
-		/*if (delta < 5){
-			return; // continue current movement
-		}*/
-		
-		if(Math.abs(error) <= bandwidth){
+		if(Math.abs(distance-bandCenter) <= bandwidth){
+			
 			goStraight();
+			
 		}
 		
-		if(distance >= 255 && countDistances > max255Count ){
+		else if(distance >= 255 && countDistances > max255Count ){
 			turnConvexCorner();
 		}
 		
 		else if (error > 0){ // case when far from wall
-			turn(rightMotor, leftMotor, false); //turn left
+			turn(rightMotor, leftMotor); //turn left
 		}
 		
 		else { // case when too close to wall
-			turn(leftMotor,rightMotor, false); //turn right
+			turn(leftMotor,rightMotor); //turn right
 		}
-		
-		this.lastDistance = this.distance;
 		
 	}	
 		
-	public void turn(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown, boolean inBandwidth){
-		motorToSpeedUp.setSpeed(motorHigh);
-		motorToSlowDown.setSpeed(motorLow);
+	public void turn(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown){
+			motorToSpeedUp.setSpeed(motorHigh);
+			motorToSlowDown.setSpeed(motorLow);
 	}
 	
 	public void turnConvexCorner(){
