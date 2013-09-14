@@ -1,20 +1,28 @@
-import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.*;
 
 public class PController implements UltrasonicController {
 	
 	private final int bandCenter, bandwidth;
-	private final int motorStraight = 200, FILTER_OUT = 20;
+	private final int motorStraight = 200;
 	private final NXTRegulatedMotor leftMotor = Motor.A, rightMotor = Motor.C;
-	private final int multiplier = 2;
 	
+	
+	private final int max255Count = 20;
 	
 	private int distance;
-	private int currentLeftSpeed;
-	private int currentRightSpeed;
-	private int newLeftSpeed;
-	private int newRightSpeed;
-	private int filterControl;
+	private int error;
+	private int countDistances;
+
+	private int motorHigh = 300;
+	private int motorLow = 100;
+	private int motorMaxSpeed = 400;
+	private int motorMinSpeed = 35;
+	
+	private int convexMotorHigh = 350;
+	private int convexMotorLow = 30;
+	
+	private int newMotorHigh;
+	private int newMotorLow;
 	
 	public PController(int bandCenter, int bandwidth) {
 		//Default Constructor
@@ -24,33 +32,77 @@ public class PController implements UltrasonicController {
 		rightMotor.setSpeed(motorStraight);
 		leftMotor.forward();
 		rightMotor.forward();
-		currentLeftSpeed = 0;
-		currentRightSpeed = 0;
-		filterControl = 0;
 	}
 	
 	@Override
-	public void processUSData(int distance) {
+	public void processUSData(int distanceArgument) {
 		
-		// rudimentary filter
-		if (distance == 255 && filterControl < FILTER_OUT) {
-			// bad value, do not set the distance var, however do increment the filter value
-			filterControl ++;
-		} else if (distance == 255){
-			// true 255, therefore set distance to 255
-			this.distance = distance;
-		} else {
-			// distance went below 255, therefore reset everything.
-			filterControl = 0;
-			this.distance = distance;
+		distance = distanceArgument;
+		error = distance - bandCenter;
+		
+		if(distance >= 255 && countDistances <= max255Count){
+			goStraight();
+			countDistances++;
+			return;
 		}
-		// TODO: process a movement based on the us distance passed in (P style)
 		
+		if(distance<255){
+			countDistances=0; //reset
+		}
 		
+		if(Math.abs(distance-bandCenter) <= bandwidth){
+			
+			goStraight();
+			
+		}
 		
+		else if(distance >= 255 && countDistances > max255Count ){
+			turnConvexCorner();
+		}
+		
+		else if (error > 0){ // case when far from wall
+			
+			turn(rightMotor, leftMotor); //turn left
+		}
+		
+		else { // case when too close to wall
+			turn(leftMotor,rightMotor); //turn right
+		}
+		
+	}	
+		
+	public void turn(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown){
+		
+		newMotorHigh = motorStraight + Math.abs(error)*7;
+		newMotorLow = motorStraight - Math.abs(error)*7;
+		
+		if(newMotorHigh>motorMaxSpeed){
+			motorToSpeedUp.setSpeed(motorMaxSpeed);
+		}
+		
+		else{
+			motorToSpeedUp.setSpeed(newMotorHigh);
+		}
+		
+		if(newMotorLow<motorMinSpeed){
+			motorToSlowDown.setSpeed(motorMinSpeed);
+		}
+		
+		else{
+			motorToSlowDown.setSpeed(newMotorLow);
+		}
+	}
+	
+	public void turnConvexCorner(){
+		rightMotor.setSpeed(convexMotorHigh);
+		leftMotor.setSpeed(convexMotorLow);
+	}
+	
+	public void goStraight(){
+		leftMotor.setSpeed(motorStraight);
+		rightMotor.setSpeed(motorStraight);
 	}
 
-	
 	@Override
 	public int readUSDistance() {
 		return this.distance;
