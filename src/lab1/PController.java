@@ -1,3 +1,4 @@
+package lab1;
 import lejos.nxt.*;
 
 public class PController implements UltrasonicController {
@@ -6,20 +7,17 @@ public class PController implements UltrasonicController {
 	private final int motorStraight = 200;
 	private final NXTRegulatedMotor leftMotor = Motor.A, rightMotor = Motor.C;
 	
-	
-	private final int max255Count = 20;
+	private final int max255Count = 24;
 	
 	private int distance;
 	private int error;
 	private int countDistances;
 
-	private int motorHigh = 300;
-	private int motorLow = 100;
 	private int motorMaxSpeed = 400;
 	private int motorMinSpeed = 35;
 	
-	private int convexMotorHigh = 350;
-	private int convexMotorLow = 30;
+	private int convexMotorHigh = 400;
+	private int convexMotorLow = 60;
 	
 	private int newMotorHigh;
 	private int newMotorLow;
@@ -51,9 +49,7 @@ public class PController implements UltrasonicController {
 		}
 		
 		if(Math.abs(distance-bandCenter) <= bandwidth){
-			
 			goStraight();
-			
 		}
 		
 		else if(distance >= 255 && countDistances > max255Count ){
@@ -61,7 +57,6 @@ public class PController implements UltrasonicController {
 		}
 		
 		else if (error > 0){ // case when far from wall
-			
 			turn(rightMotor, leftMotor); //turn left
 		}
 		
@@ -73,9 +68,10 @@ public class PController implements UltrasonicController {
 		
 	public void turn(NXTRegulatedMotor motorToSpeedUp, NXTRegulatedMotor motorToSlowDown){
 		
-		newMotorHigh = motorStraight + Math.abs(error)*7;
-		newMotorLow = motorStraight - Math.abs(error)*7;
+		newMotorHigh = motorStraight + Math.abs(error)*8; //adjust speed based on error
+		newMotorLow = motorStraight - Math.abs(error)*8;
 		
+		// never surpass maximum speed
 		if(newMotorHigh>motorMaxSpeed){
 			motorToSpeedUp.setSpeed(motorMaxSpeed);
 		}
@@ -84,6 +80,7 @@ public class PController implements UltrasonicController {
 			motorToSpeedUp.setSpeed(newMotorHigh);
 		}
 		
+		// never go below minimum speed
 		if(newMotorLow<motorMinSpeed){
 			motorToSlowDown.setSpeed(motorMinSpeed);
 		}

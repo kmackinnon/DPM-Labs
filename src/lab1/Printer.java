@@ -1,3 +1,4 @@
+package lab1;
 import lejos.nxt.Button;
 import lejos.nxt.LCD;
 

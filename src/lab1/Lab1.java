@@ -1,3 +1,4 @@
+package lab1;
 import lejos.nxt.*;
 
 
@@ -7,7 +8,7 @@ public class Lab1 {
 	//private static final SensorPort lightPort = SensorPort.S2;
 	
 	private static final int bandCenter = 30, bandWidth = 5;
-	private static final int motorLow = 100, motorHigh = 300;
+	private static final int motorLow = 80, motorHigh = 300;
 	
 	
 	public static void main(String [] args) {

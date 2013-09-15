@@ -1,3 +1,4 @@
+package lab1;
 import java.util.TimerTask;
 
 import lejos.nxt.UltrasonicSensor;
