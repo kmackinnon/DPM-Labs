@@ -1,3 +1,6 @@
+//Keith MacKinnon 260460985
+//Takeshi Musgrave 260527485
+
 package lab1;
 
 import lejos.nxt.*;
@@ -96,6 +99,7 @@ public class PController implements UltrasonicController {
 		leftMotor.setSpeed(convexMotorLow);
 	}
 
+	// each wheel rotates at same speed to go straight
 	public void goStraight() {
 		leftMotor.setSpeed(motorStraight);
 		rightMotor.setSpeed(motorStraight);
