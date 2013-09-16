@@ -33,7 +33,7 @@ public class BangBangController implements UltrasonicController {
 		error = distance - bandCenter;
 
 		// if the max distance holds for a certain number of pings, go straight
-		if (this.distance >= 255 && countDistances <= max255Count) {
+		if (distance >= 255 && countDistances <= max255Count) {
 			goStraight();
 			countDistances++;
 			return;
