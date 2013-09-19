@@ -48,7 +48,7 @@ public class Lab2 {
 			// spawn a new Thread to avoid SquareDriver.drive() from blocking
 			(new Thread() {
 				public void run() {
-					SquareDriver.drive(Motor.A, Motor.B, 2.8, 2.8, 15.24);
+					SquareDriver.drive(Motor.A, Motor.B, 2.2, 2.2, 16.5);
 				}
 			}).start();
 		}

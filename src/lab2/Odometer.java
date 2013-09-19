@@ -1,5 +1,10 @@
 package lab2;
 
+import lejos.nxt.Motor;
+import lejos.nxt.NXTRegulatedMotor;
+
+//import lejos.nxt.*;
+
 /*
  * Odometer.java
  */
@@ -7,6 +12,27 @@ package lab2;
 public class Odometer extends Thread {
 	// robot position
 	private double x, y, theta;
+	
+	NXTRegulatedMotor leftMotor = Motor.A;
+	NXTRegulatedMotor rightMotor = Motor.B;
+	
+	double leftRadius = 2.2;
+	double rightRadius = 2.2;
+	double distanceBetweenWheels = 16.5;
+	
+	int prevTachoLeft = leftMotor.getTachoCount();
+	int prevTachoRight = rightMotor.getTachoCount();
+	
+	int currTachoLeft;
+	int currTachoRight;
+	int diffTachoLeft;
+	int diffTachoRight;
+	
+	double leftWheelArc;
+	double rightWheelArc;
+	double changeInTheta;
+	double arcLengthTravelled;
+	
 
 	// odometer update period, in ms
 	private static final long ODOMETER_PERIOD = 25;
@@ -18,21 +44,44 @@ public class Odometer extends Thread {
 	public Odometer() {
 		x = 0.0;
 		y = 0.0;
-		theta = 0.0;
+		theta = 90.0; //to point along y axis
 		lock = new Object();
 	}
 
 	// run method (required for Thread)
 	public void run() {
+		
 		long updateStart, updateEnd;
+		
 
+		
 		while (true) {
 			updateStart = System.currentTimeMillis();
 			// put (some of) your odometer code here
+			
+
 
 			synchronized (lock) {
 				// don't use the variables x, y, or theta anywhere but here!
-				theta = -0.7376;
+				currTachoLeft = leftMotor.getTachoCount();
+				currTachoRight = rightMotor.getTachoCount();
+
+				diffTachoLeft = currTachoLeft - prevTachoLeft; 
+				diffTachoRight = currTachoRight - prevTachoRight;
+
+				leftWheelArc = Math.toRadians(diffTachoLeft)*leftRadius;
+				rightWheelArc = Math.toRadians(diffTachoRight) *rightRadius;
+				changeInTheta = (rightWheelArc - leftWheelArc) / distanceBetweenWheels;
+
+				arcLengthTravelled = (rightWheelArc + leftWheelArc) / 2;
+
+				setX(x + arcLengthTravelled*Math.cos(Math.toRadians(theta + changeInTheta/2)));
+				setY(y + arcLengthTravelled*Math.sin(Math.toRadians(theta + changeInTheta/2))); 
+
+				setTheta(theta + Math.toDegrees(changeInTheta));
+
+				prevTachoLeft = currTachoLeft;
+				prevTachoRight = currTachoRight;
 			}
 
 			// this ensures that the odometer only runs once every period
