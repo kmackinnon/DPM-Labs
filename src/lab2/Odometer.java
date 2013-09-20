@@ -16,9 +16,9 @@ public class Odometer extends Thread {
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
 	
-	double leftRadius = 2.2;
-	double rightRadius = 2.2;
-	double distanceBetweenWheels = 16.5;
+	double leftRadius = 2.1;
+	double rightRadius = 2.1;
+	double distanceBetweenWheels = 15.57;
 	
 	int prevTachoLeft = leftMotor.getTachoCount();
 	int prevTachoRight = rightMotor.getTachoCount();
@@ -33,7 +33,6 @@ public class Odometer extends Thread {
 	double changeInTheta;
 	double arcLengthTravelled;
 	
-
 	// odometer update period, in ms
 	private static final long ODOMETER_PERIOD = 25;
 
@@ -53,14 +52,10 @@ public class Odometer extends Thread {
 		
 		long updateStart, updateEnd;
 		
-
-		
 		while (true) {
 			updateStart = System.currentTimeMillis();
 			// put (some of) your odometer code here
 			
-
-
 			synchronized (lock) {
 				// don't use the variables x, y, or theta anywhere but here!
 				currTachoLeft = leftMotor.getTachoCount();
