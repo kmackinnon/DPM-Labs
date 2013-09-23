@@ -11,11 +11,11 @@ import lejos.nxt.Sound;
 
 public class OdometryCorrection extends Thread {
 	private static final long CORRECTION_PERIOD = 10;
+	private static final int MIN_READINGS = 5; // acts as a filter to ensure lines	
+	private static final int THRESHOLD = 520; // if lower than this value, black line
+	
 	private Odometer odometer;
-	private ColorSensor sensor = new ColorSensor(SensorPort.S1); // created our
-																	// light
-																	// sensor
-																	// object
+	private ColorSensor sensor = new ColorSensor(SensorPort.S1); //light sensor
 
 	private int sensorCounter = 0;
 	private double lastXValue = 0.0;
@@ -24,7 +24,7 @@ public class OdometryCorrection extends Thread {
 	// constructor
 	public OdometryCorrection(Odometer odometer) {
 		this.odometer = odometer;
-		sensor.setFloodlight(true);
+		sensor.setFloodlight(true); // turns on the red light of the sensor
 	}
 
 	// run method (required for Thread)
@@ -32,15 +32,15 @@ public class OdometryCorrection extends Thread {
 		long correctionStart, correctionEnd;
 
 		while (true) {
-
 			correctionStart = System.currentTimeMillis();
 
 			// put your correction code here
-			if (lightSensorReading() < 520) { // to detect black lines
+			if (lightSensorReading() < THRESHOLD) { // to detect black lines
 				sensorCounter++;
 
-				if (sensorCounter >= 5) {
-					Sound.beep(); // just to test for lines
+				// if the robot is crossing a line, update x and y coordinates respectively
+				if (sensorCounter >= MIN_READINGS) {
+					Sound.beep(); // to aid in debugging -- to test for lines
 					makeCorrection();
 				}
 			}
@@ -48,10 +48,6 @@ public class OdometryCorrection extends Thread {
 			else {
 				sensorCounter = 0; // reset in case of no black line
 			}
-
-			// ------------------------------------------------------------
-
-			// ------------------------------------------------------------
 
 			// this ensure the odometry correction occurs only once every period
 			correctionEnd = System.currentTimeMillis();
@@ -69,42 +65,23 @@ public class OdometryCorrection extends Thread {
 	}
 
 	public void makeCorrection() {
-		boolean range1 = odometer.getTheta() > 88 && odometer.getTheta() < 92;
-		boolean range2 = odometer.getTheta() > -92 && odometer.getTheta() < -88;
-		boolean range3 = odometer.getTheta() > -182 && odometer.getTheta() < -178;
-		boolean range4 = odometer.getTheta() > -272 && odometer.getTheta() < -268;
+		
+		// these booleans are to check which leg of the track the robot is in
+		boolean range1 = odometer.getTheta() > 87 && odometer.getTheta() < 93;
+		boolean range2 = odometer.getTheta() > -3 && odometer.getTheta() < 3;
+		boolean range3 = odometer.getTheta() > -93 && odometer.getTheta() < -87;
+		boolean range4 = odometer.getTheta() > -183 && odometer.getTheta() < -177;
 
-		if (range1) {
-
-			if (!(odometer.getY() < 30.48)) {
-				odometer.setY(30.48 + lastYValue);
-			}
-
+		// need to adjust y value to nearest 15.24 upon crossing a line
+		if (range1 || range3) {
 			lastYValue = odometer.getY();
+			odometer.setY(Math.round(lastYValue / 15.24) * 15.24);
 		}
-
-		if (range2) {
-
-			if (!(odometer.getX() < 30.48)) {
-				odometer.setX(30.48 + lastXValue);
-			}
-
+		
+		// need to adjust x value to nearest 15.24 upon crossing a line
+		if (range2 || range4) {
 			lastXValue = odometer.getX();
-
-		}
-
-		if (range3) {
-
-			odometer.setY(-30.48 + lastYValue);
-			lastYValue = odometer.getY();
-
-		}
-
-		if (range4) {
-
-			odometer.setX(-30.48 + lastXValue);
-			lastXValue = odometer.getX();
-
+			odometer.setX(Math.round(lastXValue / 15.24) * 15.24);
 		}
 	}
 
