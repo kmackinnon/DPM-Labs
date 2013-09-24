@@ -38,16 +38,11 @@ public class OdometryDisplay extends Thread {
 			odometer.getPosition(position, new boolean[] { true, true, true });
 
 			// display odometry information
-			
-	/*		LCD.drawString(formattedDoubleToString(position[0],2),3,0);
-			LCD.drawString(formattedDoubleToString(position[1],2),3,1);
-			LCD.drawString(formattedDoubleToString(position[2]-90,2),3,0);*/
-			
 			for (int i = 0; i < 3; i++) {
 				LCD.drawString(formattedDoubleToString(position[i], 2), 3, i);
 			}
 
-			LCD.drawInt(correction.lightSensorReading(), 7, 3);
+			LCD.drawInt(correction.lightSensorReading(), 7, 3); //draws the light sensor reading
 			
 			// throttle the OdometryDisplay
 			displayEnd = System.currentTimeMillis();

@@ -23,11 +23,13 @@ public class Odometer extends Thread {
 	int prevTachoLeft = leftMotor.getTachoCount();
 	int prevTachoRight = rightMotor.getTachoCount();
 	
+	// tachometer values in cm
 	int currTachoLeft;
 	int currTachoRight;
 	int diffTachoLeft;
 	int diffTachoRight;
 	
+	// angles in radians
 	double leftWheelArc;
 	double rightWheelArc;
 	double changeInTheta;
@@ -58,23 +60,30 @@ public class Odometer extends Thread {
 			
 			synchronized (lock) {
 				// don't use the variables x, y, or theta anywhere but here!
+				
+				// get the tachometer count from each motor
 				currTachoLeft = leftMotor.getTachoCount();
 				currTachoRight = rightMotor.getTachoCount();
-
+				
+				// get the delta of the current reading minus the old one
 				diffTachoLeft = currTachoLeft - prevTachoLeft; 
 				diffTachoRight = currTachoRight - prevTachoRight;
 
+				// calculates the wheel arcs of each wheel
 				leftWheelArc = Math.toRadians(diffTachoLeft)*leftRadius;
 				rightWheelArc = Math.toRadians(diffTachoRight) *rightRadius;
+				
 				changeInTheta = (rightWheelArc - leftWheelArc) / distanceBetweenWheels;
 
+				// determines arc of motion by considering arc of each wheel and averaging
 				arcLengthTravelled = (rightWheelArc + leftWheelArc) / 2;
 
+				// setting the current x value, y value, and theta values
 				setX(x + arcLengthTravelled*Math.cos(Math.toRadians(theta + changeInTheta/2)));
 				setY(y + arcLengthTravelled*Math.sin(Math.toRadians(theta + changeInTheta/2))); 
-
 				setTheta(theta + Math.toDegrees(changeInTheta));
 
+				// updates the previous tachometer readings to be the current ones
 				prevTachoLeft = currTachoLeft;
 				prevTachoRight = currTachoRight;
 			}

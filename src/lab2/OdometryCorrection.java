@@ -1,5 +1,8 @@
 package lab2;
 
+// Keith MacKinnon (260460985)
+// Takeshi Musgrave (260527485)
+
 import lejos.nxt.ColorSensor;
 import lejos.nxt.LCD;
 import lejos.nxt.SensorPort;
@@ -13,13 +16,13 @@ public class OdometryCorrection extends Thread {
 	private static final long CORRECTION_PERIOD = 10;
 	private static final int MIN_READINGS = 5; // acts as a filter to ensure lines	
 	private static final int THRESHOLD = 520; // if lower than this value, black line
+	private static final double OFFSET = 5.5; // difference between sensor and wheels
+	private static final double HALF_SQUARE = 15.24; // a square is 30.48cm
 	
 	private Odometer odometer;
 	private ColorSensor sensor = new ColorSensor(SensorPort.S1); //light sensor
 
-	private int sensorCounter = 0;
-	private double lastXValue = 0.0;
-	private double lastYValue = 0.0;
+	private int sensorCounter = 0; //used to ensure line crossing
 
 	// constructor
 	public OdometryCorrection(Odometer odometer) {
@@ -71,20 +74,25 @@ public class OdometryCorrection extends Thread {
 		boolean range2 = odometer.getTheta() > -3 && odometer.getTheta() < 3;
 		boolean range3 = odometer.getTheta() > -93 && odometer.getTheta() < -87;
 		boolean range4 = odometer.getTheta() > -183 && odometer.getTheta() < -177;
+		
+		int multiplier = 1; // for range 1 and 2, multiply offset so negative
+
+		if (range3 || range4){ // for range 3 and 4, multiply offset so positive
+			multiplier = -1;
+		}
 
 		// need to adjust y value to nearest 15.24 upon crossing a line
 		if (range1 || range3) {
-			lastYValue = odometer.getY();
-			odometer.setY(Math.round(lastYValue / 15.24) * 15.24);
+			odometer.setY((Math.round(odometer.getY() / HALF_SQUARE) * HALF_SQUARE) -OFFSET*multiplier);
 		}
 		
 		// need to adjust x value to nearest 15.24 upon crossing a line
 		if (range2 || range4) {
-			lastXValue = odometer.getX();
-			odometer.setX(Math.round(lastXValue / 15.24) * 15.24);
+			odometer.setX((Math.round(odometer.getX() / HALF_SQUARE) * HALF_SQUARE) -OFFSET*multiplier);
 		}
 	}
 
+	// returns the light value of the sensor
 	public int lightSensorReading() {
 		return sensor.getRawLightValue();
 	}
