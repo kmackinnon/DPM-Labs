@@ -26,6 +26,6 @@ public class Coordinate {
 	
 	// sets isVisited true or false 
 	public void setIsVisited(double x, double y){
-		isVisited = x==getX() && y==getY();		
+		isVisited = (x==getX()) && (y==getY());		
 	}
 }

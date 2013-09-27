@@ -10,8 +10,10 @@ public class Lab3 {
 		int buttonChoice;
 
 		// some objects that need to be instantiated
-		Navigation navigation = new Navigation();
 
+		Odometer odometer = new Odometer();
+		OdometryDisplay odometryDisplay = new OdometryDisplay(odometer);
+		Navigation navigation = new Navigation(odometer);
 
 		do {
 			// clear the display
@@ -31,15 +33,15 @@ public class Lab3 {
 			for (NXTRegulatedMotor motor : new NXTRegulatedMotor[] { Motor.A, Motor.B, Motor.C }) {
 				motor.forward();
 			}
-
 			// start navigation without obstacles
 			
+			odometer.start();
+			odometryDisplay.start();
+			
 			navigation.start();
-
+			
 		} else {
-
-			navigation.start();
-	
+			//navigationObstacle.start();
 		}
 		
 		// to end the program

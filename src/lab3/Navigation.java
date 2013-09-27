@@ -7,11 +7,19 @@ public class Navigation extends Thread {
 
 	double x, y, xTarget, yTarget;
 
+	Odometer odometer;
+
+	public Navigation(Odometer odometer) {
+		this.odometer = odometer;
+	}
+
+	private static final long NAVIGATION_PERIOD = 10;
 	static final double leftRadius = 2.1;
 	static final double rightRadius = 2.1;
 	static final double wheelBase = 15.4;
+	static final double errorThreshold = 5.0;
 
-	Odometer odometer = new Odometer();
+	private static final int ROTATE_SPEED = 150;
 
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
@@ -23,13 +31,10 @@ public class Navigation extends Thread {
 	Coordinate coord4 = new Coordinate(60, 0);
 
 	public void run() {
-
-		odometer.start();
-
-
-		
+		long updateStart, updateEnd;
 
 		while (true) {
+			updateStart = System.currentTimeMillis();
 
 			x = odometer.getX();
 			y = odometer.getY();
@@ -62,24 +67,60 @@ public class Navigation extends Thread {
 
 			travelTo(xTarget, yTarget);
 
+			updateEnd = System.currentTimeMillis();
+			if (updateEnd - updateStart < NAVIGATION_PERIOD) {
+				try {
+					Thread.sleep(NAVIGATION_PERIOD - (updateEnd - updateStart));
+				} catch (InterruptedException e) {
+					// there is nothing to be done here because it is not
+					// expected that the odometer will be interrupted by
+					// another thread
+				}
+			}
+
 		}
 
 	}
 
-	public void travelTo(double x, double y) {
-		// TODO Calculate minimal angle for theta
-		double xDiff = xTarget - x;
-		double yDiff = yTarget - y;
-		double theta = Math.atan2(yDiff, xDiff);
-		
-		turnTo(theta);
-		leftMotor.forward();
-		rightMotor.forward();
+	public void travelTo(double xTarget, double yTarget) {
+
+		// Calculate minimal angle for theta
+		double xDiff = xTarget - this.x;
+		double yDiff = yTarget - this.y;
+		double theta = Math.toDegrees(Math.atan2(yDiff, xDiff));
+
+		if (Math.abs(odometer.getTheta() - theta) > errorThreshold) {
+			turnTo(theta);
+		}
+
+		else {
+			leftMotor.forward();
+			rightMotor.forward();
+		}
 	}
 
-	public void turnTo(double theta) {
-		leftMotor.rotate(convertAngle(leftRadius, wheelBase, theta), true);
-		rightMotor.rotate(-convertAngle(rightRadius, wheelBase, theta), false);
+	public void turnTo(double targetTheta) {
+		double currentTheta = odometer.getTheta();
+		double rotateAmount = currentTheta - targetTheta;
+
+		if (currentTheta - targetTheta > 180) {
+			rotateAmount = 360 - (currentTheta - targetTheta);
+		}
+
+		leftMotor.setSpeed(ROTATE_SPEED);
+		rightMotor.setSpeed(ROTATE_SPEED);
+
+		leftMotor.rotate(convertAngle(leftRadius, wheelBase, rotateAmount), true);
+		rightMotor.rotate(-convertAngle(rightRadius, wheelBase, rotateAmount), false);
+
+		if (currentTheta > 180) {
+			odometer.setTheta(currentTheta - 360);
+		}
+
+		if (currentTheta < -180) {
+			odometer.setTheta(currentTheta + 360);
+		}
+
 	}
 
 	public boolean isNavigating() {

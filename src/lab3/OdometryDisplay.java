@@ -30,7 +30,6 @@ public class OdometryDisplay extends Thread {
 			LCD.drawString("X:              ", 0, 0);
 			LCD.drawString("Y:              ", 0, 1);
 			LCD.drawString("T:              ", 0, 2);
-			LCD.drawString("Color:          ", 0, 3);
 
 			// get the odometry information
 			odometer.getPosition(position, new boolean[] { true, true, true });
