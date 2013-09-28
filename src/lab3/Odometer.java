@@ -18,7 +18,7 @@ public class Odometer extends Thread {
 	
 	double leftRadius = 2.1;
 	double rightRadius = 2.1;
-	double distanceBetweenWheels = 15.4;
+	double distanceBetweenWheels = 15.5;
 	
 	int prevTachoLeft = leftMotor.getTachoCount();
 	int prevTachoRight = rightMotor.getTachoCount();

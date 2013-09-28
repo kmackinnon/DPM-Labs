@@ -13,18 +13,20 @@ public class Navigation extends Thread {
 		this.odometer = odometer;
 	}
 
-	private static final long NAVIGATION_PERIOD = 10;
+	private static final long NAVIGATION_PERIOD = 25;
 	static final double leftRadius = 2.1;
 	static final double rightRadius = 2.1;
-	static final double wheelBase = 15.4;
-	static final double errorThreshold = 5.0;
+	static final double wheelBase = 15.5;
+	static final double errorThreshold = 1;
 
-	private static final int ROTATE_SPEED = 150;
+	private static final int ROTATE_SPEED = 180;
+	private static final int FORWARD_SPEED = 360;
 
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
 
 	// COORDINATES
+	Coordinate coord0 = new Coordinate(0, 0);
 	Coordinate coord1 = new Coordinate(60, 30);
 	Coordinate coord2 = new Coordinate(30, 30);
 	Coordinate coord3 = new Coordinate(30, 60);
@@ -36,6 +38,14 @@ public class Navigation extends Thread {
 		while (true) {
 			updateStart = System.currentTimeMillis();
 
+			double currentTheta = odometer.getTheta();
+			
+			if (currentTheta > 180) {
+				odometer.setTheta(currentTheta - 360);
+			} else if (currentTheta < -180) {
+				odometer.setTheta(currentTheta + 360);
+			}
+			
 			x = odometer.getX();
 			y = odometer.getY();
 
@@ -43,24 +53,17 @@ public class Navigation extends Thread {
 			if (coord4.getIsVisited()) {
 				leftMotor.stop();
 				rightMotor.stop();
-			}
-
-			else if (coord3.getIsVisited()) {
+				break;
+			} else if (coord3.getIsVisited()) {
 				setTarget(coord4);
 				coord4.setIsVisited(x, y);
-			}
-
-			else if (coord2.getIsVisited()) {
+			} else if (coord2.getIsVisited()) {
 				setTarget(coord3);
 				coord3.setIsVisited(x, y);
-			}
-
-			else if (coord1.getIsVisited()) {
+			} else if (coord1.getIsVisited()) {
 				setTarget(coord2);
 				coord2.setIsVisited(x, y);
-			}
-
-			else {
+			} else {
 				setTarget(coord1);
 				coord1.setIsVisited(x, y);
 			}
@@ -84,16 +87,20 @@ public class Navigation extends Thread {
 
 	public void travelTo(double xTarget, double yTarget) {
 
-		// Calculate minimal angle for theta
+
+		// Determine whether to turn or not
 		double xDiff = xTarget - this.x;
 		double yDiff = yTarget - this.y;
-		double theta = Math.toDegrees(Math.atan2(yDiff, xDiff));
+		double targetTheta = Math.toDegrees(Math.atan2(yDiff, xDiff));
 
-		if (Math.abs(odometer.getTheta() - theta) > errorThreshold) {
-			turnTo(theta);
-		}
+		double deltaTheta = targetTheta - odometer.getTheta();
 
-		else {
+		// if the heading is off, we must correct
+		if (Math.abs(deltaTheta) > errorThreshold) {
+			turnTo(targetTheta);
+		} else {
+			leftMotor.setSpeed(FORWARD_SPEED);
+			rightMotor.setSpeed(FORWARD_SPEED);
 			leftMotor.forward();
 			rightMotor.forward();
 		}
@@ -101,26 +108,37 @@ public class Navigation extends Thread {
 
 	public void turnTo(double targetTheta) {
 		double currentTheta = odometer.getTheta();
-		double rotateAmount = currentTheta - targetTheta;
+		double rotateAmount = targetTheta - currentTheta;
 
-		if (currentTheta - targetTheta > 180) {
-			rotateAmount = 360 - (currentTheta - targetTheta);
+		// to keep the angle in the range of -180 to 180
+	
+		// If at a point, turn to in place
+		if (coord0.isAtPoint(x, y) || coord1.isAtPoint(x, y)
+				|| coord2.isAtPoint(x, y) || coord3.isAtPoint(x, y)
+				|| coord4.isAtPoint(x, y)) {
+
+			// turn a minimal angle
+			if (rotateAmount > 180) {
+				rotateAmount = rotateAmount - 360;
+			} else if (rotateAmount < -180) {
+				rotateAmount = rotateAmount + 360;
+			}
+
+			leftMotor.setSpeed(ROTATE_SPEED);
+			rightMotor.setSpeed(ROTATE_SPEED);
+
+			leftMotor.rotate(-convertAngle(leftRadius, wheelBase, rotateAmount), true);
+			rightMotor.rotate(convertAngle(rightRadius, wheelBase, rotateAmount), false);
 		}
+		// turn while travelling
+		else if (rotateAmount > 0) {
+			leftMotor.setSpeed(FORWARD_SPEED - 120);
+			rightMotor.setSpeed(FORWARD_SPEED);
 
-		leftMotor.setSpeed(ROTATE_SPEED);
-		rightMotor.setSpeed(ROTATE_SPEED);
-
-		leftMotor.rotate(convertAngle(leftRadius, wheelBase, rotateAmount), true);
-		rightMotor.rotate(-convertAngle(rightRadius, wheelBase, rotateAmount), false);
-
-		if (currentTheta > 180) {
-			odometer.setTheta(currentTheta - 360);
+		} else if (rotateAmount < 0) {
+			leftMotor.setSpeed(FORWARD_SPEED);
+			rightMotor.setSpeed(FORWARD_SPEED - 120);
 		}
-
-		if (currentTheta < -180) {
-			odometer.setTheta(currentTheta + 360);
-		}
-
 	}
 
 	public boolean isNavigating() {
