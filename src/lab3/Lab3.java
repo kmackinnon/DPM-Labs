@@ -13,6 +13,7 @@ public class Lab3 {
 		Odometer odometer = new Odometer();
 		OdometryDisplay odometryDisplay = new OdometryDisplay(odometer);
 		Navigation navigation = new Navigation(odometer);
+		NavigationObstacle navigationObstacle = new NavigationObstacle(odometer);
 
 		do {
 			// clear the display
@@ -38,9 +39,11 @@ public class Lab3 {
 			odometryDisplay.start();
 			navigation.start();
 			
-		}/* else {
-			//navigationObstacle.start();
-		}*/
+		}else {
+			odometer.start();
+			odometryDisplay.start();
+			navigationObstacle.start();
+		}
 		
 		// to end the program
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE);
