@@ -1,5 +1,10 @@
 package lab3;
 
+/* Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Group 26
+ */
+
 import lejos.nxt.Button;
 import lejos.nxt.LCD;
 import lejos.nxt.Motor;

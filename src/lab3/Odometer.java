@@ -1,13 +1,12 @@
 package lab3;
 
+/* Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Group 26
+ */
+
 import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
-
-//import lejos.nxt.*;
-
-/*
- * Odometer.java
- */
 
 public class Odometer extends Thread {
 	// robot position

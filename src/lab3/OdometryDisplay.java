@@ -1,9 +1,10 @@
 package lab3;
 
-
-/*
- * OdometryDisplay.java
+/* Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Group 26
  */
+
 import lejos.nxt.LCD;
 
 public class OdometryDisplay extends Thread {

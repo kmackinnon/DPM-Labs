@@ -1,5 +1,10 @@
 package lab3;
 
+/* Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Group 26
+ */
+
 public class Coordinate {
 
 	private double x;

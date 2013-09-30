@@ -1,5 +1,10 @@
 package lab3;
 
+/* Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Group 26
+ */
+
 import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.SensorPort;
@@ -15,21 +20,23 @@ public class NavigationObstacle extends Thread {
 	double obstacleTheta; // theta when robot first sees obstacle
 
 	private static int countDistances; // the number of times sensor reads 255
-	private static final int MAX_255_COUNT = 20; // number of 255 readings
-
 	boolean isNearObstacle = false;
 
 	// Class constants
 	private static final long NAVIGATION_PERIOD = 25;
-	private static final double LEFT_RADIUS = 2.1; // cm
-	private static final double RIGHT_RADIUS = 2.1; // cm
-	private static final double WHEEL_BASE = 15.5; // cm
-	private static final double ERROR_THRESHOLD = 1; // degrees
+	private static final int MAX_255_COUNT = 20; // number of 255 readings
+	private static final double LEFT_RADIUS = 2.1; // left wheel radius (cm)
+	private static final double RIGHT_RADIUS = 2.1; // right wheel radius (cm)
+	private static final double WHEEL_BASE = 15.5; // wheel track (cm)
+	private static final double ERROR_THRESHOLD = 1; // degrees off heading
+	private static final int TOO_CLOSE = 20;
 
 	private static final int ROTATE_SPEED = 180; // big turns
 	private static final int FORWARD_SPEED = 360; // normal driving speed
 	private static final int OFF_COURSE_SPEED = 80; // large correction needed
 	private static final int ON_COURSE_SPEED = 220; // small correction needed
+	private static final int OFF_COURSE_ANGLE = 15; // delta theta due to block
+	private static final int ON_COURSE_ANGLE = 0; // when travelling properly
 
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
@@ -116,7 +123,7 @@ public class NavigationObstacle extends Thread {
 		}
 
 		// if there is an obstacle, set boolean to true
-		if (usSensor.getDistance() < 20) {
+		if (usSensor.getDistance() < TOO_CLOSE) {
 			isNearObstacle = true;
 			obstacleTheta = odometer.getTheta();
 		}
@@ -145,17 +152,17 @@ public class NavigationObstacle extends Thread {
 					true);
 			rightMotor.rotate(convertAngle(RIGHT_RADIUS, WHEEL_BASE, rotate),
 					false);
-			
-		} else if (rotate > 15) {
+
+		} else if (rotate > OFF_COURSE_ANGLE) {
 			leftMotor.setSpeed(OFF_COURSE_SPEED); // turn left
 			rightMotor.setSpeed(FORWARD_SPEED);
-		} else if (rotate < -15) {
+		} else if (rotate < -OFF_COURSE_ANGLE) {
 			leftMotor.setSpeed(FORWARD_SPEED);
 			rightMotor.setSpeed(OFF_COURSE_SPEED); // turn right
-		} else if (rotate > 0) {
+		} else if (rotate > ON_COURSE_ANGLE) {
 			leftMotor.setSpeed(ON_COURSE_SPEED); // correct left
 			rightMotor.setSpeed(FORWARD_SPEED);
-		} else if (rotate < 0) {
+		} else if (rotate < ON_COURSE_ANGLE) {
 			leftMotor.setSpeed(FORWARD_SPEED);
 			rightMotor.setSpeed(ON_COURSE_SPEED); // correct right
 		}
@@ -165,7 +172,7 @@ public class NavigationObstacle extends Thread {
 		int distance = usSensor.getDistance();
 
 		// if near block, make a nearly in-place turn
-		if (distance < 20 || odometer.getTheta() > (obstacleTheta - 75)) {
+		if (distance < TOO_CLOSE || odometer.getTheta() > (obstacleTheta - 75)) {
 			rightMotor.setSpeed(10);
 		}
 
@@ -176,15 +183,15 @@ public class NavigationObstacle extends Thread {
 			countDistances++;
 			return;
 		} else if (distance < 255) {
-			countDistances = 0; // reset the counter when sensor not seeing max
-								// distance
+			countDistances = 0; // reset when sensor not seeing max distance
 		} else {
 			isNearObstacle = false;
 		}
 	}
 
+	// return true if another thread has called travelTo() or turnTo()
+	// and has yet to return
 	public boolean isNavigating() {
-		// TODO
 		return false;
 	}
 
@@ -194,10 +201,12 @@ public class NavigationObstacle extends Thread {
 		yTarget = coord.getY();
 	}
 
+	// returns the number of degrees the wheels must turn over a distance
 	private static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
 	}
 
+	// returns the number of degrees to turn a certain angle
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}

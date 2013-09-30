@@ -1,5 +1,10 @@
 package lab3;
 
+/* Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Group 26
+ */
+
 import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
 
@@ -11,9 +16,9 @@ public class Navigation extends Thread {
 
 	// Class constants
 	private static final long NAVIGATION_PERIOD = 25;
-	private static final double LEFT_RADIUS = 2.1; // cm
-	private static final double RIGHT_RADIUS = 2.1; // cm
-	private static final double WHEEL_BASE = 15.5; // cm
+	private static final double LEFT_RADIUS = 2.1; // left wheel radius (cm)
+	private static final double RIGHT_RADIUS = 2.1; // right wheel radius (cm)
+	private static final double WHEEL_BASE = 15.5; // wheel track (cm)
 	private static final double ERROR_THRESHOLD = 1; // measured in degrees
 
 	private static final int ROTATE_SPEED = 180; // big turns
@@ -108,7 +113,7 @@ public class Navigation extends Thread {
 
 	public void turnTo(double targetTheta) {
 		double currentTheta = odometer.getTheta();
-		double rotateAmount = targetTheta - currentTheta;
+		double rotate = targetTheta - currentTheta;
 
 		// If at a point, turn to in place
 		if (coord0.isAtPoint(x, y) || coord1.isAtPoint(x, y)
@@ -116,34 +121,34 @@ public class Navigation extends Thread {
 				|| coord4.isAtPoint(x, y)) {
 
 			// turn a minimal angle
-			if (rotateAmount > 180) {
-				rotateAmount -= 360;
-			} else if (rotateAmount < -180) {
-				rotateAmount += 360;
+			if (rotate > 180) {
+				rotate -= 360;
+			} else if (rotate < -180) {
+				rotate += 360;
 			}
 
 			leftMotor.setSpeed(ROTATE_SPEED);
 			rightMotor.setSpeed(ROTATE_SPEED);
 
-			leftMotor.rotate(
-					-convertAngle(LEFT_RADIUS, WHEEL_BASE, rotateAmount), true);
-			rightMotor
-					.rotate(convertAngle(RIGHT_RADIUS, WHEEL_BASE, rotateAmount),
-							false);
+			leftMotor.rotate(-convertAngle(LEFT_RADIUS, WHEEL_BASE, rotate),
+					true);
+			rightMotor.rotate(convertAngle(RIGHT_RADIUS, WHEEL_BASE, rotate),
+					false);
 		}
 		// turn while travelling by adjusting motor speeds
-		else if (rotateAmount > 0) {
+		else if (rotate > 0) {
 			leftMotor.setSpeed(TURNING_SPEED); // correct left
 			rightMotor.setSpeed(FORWARD_SPEED);
 
-		} else if (rotateAmount < 0) {
+		} else if (rotate < 0) {
 			leftMotor.setSpeed(FORWARD_SPEED);
 			rightMotor.setSpeed(TURNING_SPEED); // correct right
 		}
 	}
 
+	// return true if another thread has called travelTo() or turnTo()
+	// and has yet to return
 	public boolean isNavigating() {
-		// TODO
 		return false;
 	}
 
@@ -153,11 +158,12 @@ public class Navigation extends Thread {
 		yTarget = coord.getY();
 	}
 
-	// helper methods
+	// returns the number of degrees the wheels must turn over a distance
 	private static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
 	}
 
+	// returns the number of degrees to turn a certain angle
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
