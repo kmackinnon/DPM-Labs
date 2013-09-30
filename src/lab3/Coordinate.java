@@ -4,8 +4,8 @@ public class Coordinate {
 
 	private double x;
 	private double y;
-	private boolean isVisited = false;
-	private final double NEARBY = 2;
+	private boolean isVisited = false; // whether coordinate is visited
+	private final double NEARBY = 2; // near the target (measured in cm)
 
 	public Coordinate(double x, double y) {
 		this.x = x;
@@ -30,11 +30,11 @@ public class Coordinate {
 		isVisited = (Math.abs(x - getX()) < NEARBY)
 				&& (Math.abs(y - getY()) < NEARBY);
 	}
-	
+
 	// returns whether the robot is at a specific point
-	public boolean isAtPoint(double x, double y){
-		return (Math.abs(x - getX()) < NEARBY) && (Math.abs(y - getY()) < NEARBY);
-		
+	public boolean isAtPoint(double x, double y) {
+		return (Math.abs(x - getX()) < NEARBY)
+				&& (Math.abs(y - getY()) < NEARBY);
 	}
-	
+
 }

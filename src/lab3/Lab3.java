@@ -6,7 +6,7 @@ import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
 
 public class Lab3 {
-	public static void main(String[] args){
+	public static void main(String[] args) {
 		int buttonChoice;
 
 		// some objects that need to be instantiated
@@ -19,32 +19,34 @@ public class Lab3 {
 			// clear the display
 			LCD.clear();
 
-			// ask the user whether the motors should drive in a square or float
+			// ask the user whether to navigate with or without the obstacle
 			LCD.drawString("< Left   | Right >", 0, 0);
 			LCD.drawString("         |        ", 0, 1);
-			LCD.drawString("Navigate | Obstacles", 0, 2);
+			LCD.drawString("Navigate | Obstacle", 0, 2);
 
-			buttonChoice = Button.waitForAnyPress(); 
-			
+			buttonChoice = Button.waitForAnyPress();
+
 		} while (buttonChoice != Button.ID_LEFT
 				&& buttonChoice != Button.ID_RIGHT);
 
 		if (buttonChoice == Button.ID_LEFT) {
-			for (NXTRegulatedMotor motor : new NXTRegulatedMotor[] { Motor.A, Motor.B, Motor.C }) {
+			for (NXTRegulatedMotor motor : new NXTRegulatedMotor[] { Motor.A,
+					Motor.B, Motor.C }) {
 				motor.forward();
 			}
-			
-			// start navigation without obstacles
+
+			// start navigation without obstacle
 			odometer.start();
 			odometryDisplay.start();
 			navigation.start();
-			
-		}else {
+
+		} else {
+			// start navigation with obstacle
 			odometer.start();
 			odometryDisplay.start();
 			navigationObstacle.start();
 		}
-		
+
 		// to end the program
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE);
 		System.exit(0);
