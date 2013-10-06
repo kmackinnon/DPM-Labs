@@ -1,11 +1,16 @@
 package lab4;
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
 
 import lejos.nxt.NXTRegulatedMotor;
 
 public class TwoWheeledRobot {
 	public static final double DEFAULT_LEFT_RADIUS = 2.1;
 	public static final double DEFAULT_RIGHT_RADIUS = 2.1;
-	public static final double DEFAULT_WIDTH = 15.5;
+	public static final double DEFAULT_WIDTH = 15.6;
 	private NXTRegulatedMotor leftMotor, rightMotor;
 	private double leftRadius, rightRadius, width;
 	private double forwardSpeed, rotationSpeed;

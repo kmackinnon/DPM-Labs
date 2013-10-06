@@ -1,6 +1,16 @@
 package lab4;
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
 
-import lejos.nxt.*;
+import lejos.nxt.Button;
+import lejos.nxt.ColorSensor;
+import lejos.nxt.LCD;
+import lejos.nxt.Motor;
+import lejos.nxt.SensorPort;
+import lejos.nxt.UltrasonicSensor;
 
 public class Lab4 {
 
@@ -10,7 +20,7 @@ public class Lab4 {
 		Odometer odo = new Odometer(patBot, true);
 		
 		UltrasonicSensor us = new UltrasonicSensor(SensorPort.S2);
-		LightSensor ls = new LightSensor(SensorPort.S1);
+		ColorSensor cs = new ColorSensor(SensorPort.S1);
 	
 		int buttonChoice;
 		
@@ -27,9 +37,10 @@ public class Lab4 {
 
 		} while (buttonChoice != Button.ID_LEFT
 				&& buttonChoice != Button.ID_RIGHT);
-
+  
 		USLocalizer usl;
 		
+		// button choice determines ultrasonic localization method
 		if (buttonChoice == Button.ID_LEFT) {
 			usl = new USLocalizer(odo, us, USLocalizer.LocalizationType.RISING_EDGE);
 		} else { // right button	
@@ -40,10 +51,8 @@ public class Lab4 {
 		
 		usl.doLocalization();
 		
-		
-		
 		// perform the light sensor localization
-		LightLocalizer lsl = new LightLocalizer(odo, ls);
+		LightLocalizer lsl = new LightLocalizer(odo, cs);
 		lsl.doLocalization();			
 		
 		while (buttonChoice != Button.ID_ESCAPE);

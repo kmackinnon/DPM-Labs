@@ -1,4 +1,9 @@
 package lab4;
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
 
 import lejos.nxt.NXTRegulatedMotor;
 import lejos.util.Timer;

@@ -1,4 +1,9 @@
 package lab4;
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
 
 import lejos.nxt.LCD;
 import lejos.util.Timer;
@@ -31,14 +36,8 @@ public class LCDInfo implements TimerListener{
 		LCD.drawString("X: ", 0, 0);
 		LCD.drawString("Y: ", 0, 1);
 		LCD.drawString("T: ", 0, 2);
-		LCD.drawString("D: ", 0, 3);
-		LCD.drawString("A: ", 0, 4);
-		LCD.drawString("B: ", 0, 5);
-		LCD.drawInt((int)(pos[0] * 10), 3, 0);
-		LCD.drawInt((int)(pos[1] * 10), 3, 1);
+		LCD.drawInt((int)(pos[0]*10), 3, 0);
+		LCD.drawInt((int)(pos[1]*10), 3, 1);
 		LCD.drawInt((int)pos[2], 3, 2);
-		LCD.drawInt((int)uslocalizer.getCurrentDistance(), 3, 3);
-		LCD.drawInt((int)uslocalizer.getAngleA(), 3, 4);
-		LCD.drawInt((int)uslocalizer.getAngleB(), 3, 5);
 	}
 }

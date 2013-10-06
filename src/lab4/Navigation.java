@@ -1,8 +1,13 @@
 package lab4;
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
 
 /*
  * File: Navigation.java
- * Written by: Sean Lawlor
+ * Written by: Sean Lawlor and Takeshi Musgrave, Keith MacKinnon
  * ECSE 211 - Design Principles and Methods, Head TA
  * Fall 2011
  * 
@@ -12,7 +17,7 @@ import lejos.nxt.NXTRegulatedMotor;
 
 public class Navigation {
 	final static int FAST = 200, SLOW = 100, ACCELERATION = 4000;
-	final static double DEG_ERR = 3.0, CM_ERR = 1.0;
+	final static double DEG_ERR = 2.0, CM_ERR = 0.5;
 	private Odometer odometer;
 	private NXTRegulatedMotor leftMotor, rightMotor;
 
