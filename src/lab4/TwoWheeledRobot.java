@@ -57,6 +57,14 @@ public class TwoWheeledRobot {
 		setSpeeds(forwardSpeed, rotationSpeed);
 	}
 	
+	public NXTRegulatedMotor getRightMotor(){
+		return rightMotor;
+	}
+	
+	public NXTRegulatedMotor getLeftMotor(){
+		return leftMotor;
+	}
+	
 	public void setRotationSpeed(double speed) {
 		rotationSpeed = speed;
 		setSpeeds(forwardSpeed, rotationSpeed);

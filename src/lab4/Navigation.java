@@ -1,181 +1,142 @@
 package lab4;
 
-import lejos.nxt.LCD;
-import lejos.nxt.Motor;
+/*
+ * File: Navigation.java
+ * Written by: Sean Lawlor
+ * ECSE 211 - Design Principles and Methods, Head TA
+ * Fall 2011
+ * 
+ * Movement control class (turnTo, travelTo, flt, localize)
+ */
 import lejos.nxt.NXTRegulatedMotor;
 
-
 public class Navigation {
-	double x, y, xTarget, yTarget; // current and target positions
+	final static int FAST = 200, SLOW = 100, ACCELERATION = 4000;
+	final static double DEG_ERR = 3.0, CM_ERR = 1.0;
+	private Odometer odometer;
+	private NXTRegulatedMotor leftMotor, rightMotor;
 
-	Odometer odometer; // declare an Odometer object
-
-	// Class constants
-	private static final long NAVIGATION_PERIOD = 25;
-	private static final double LEFT_RADIUS = 2.1; // left wheel radius (cm)
-	private static final double RIGHT_RADIUS = 2.1; // right wheel radius (cm)
-	private static final double WHEEL_BASE = 15.5; // wheel track (cm)
-	private static final double ERROR_THRESHOLD = 1; // measured in degrees
-
-	private static final int ROTATE_SPEED = 180; // big turns
-	private static final int FORWARD_SPEED = 360; // normal driving
-	private static final int TURNING_SPEED = 240; // adjusting position
-
-	NXTRegulatedMotor leftMotor = Motor.A;
-	NXTRegulatedMotor rightMotor = Motor.B;
-
-	// COORDINATES
-	Coordinate coord0 = new Coordinate(0, 0); // starting position
-	Coordinate coord1 = new Coordinate(60, 30);
-	Coordinate coord2 = new Coordinate(30, 30);
-	Coordinate coord3 = new Coordinate(30, 60);
-	Coordinate coord4 = new Coordinate(60, 0); // ending position
-
-	private Odometer odo;
-	private TwoWheeledRobot robot;
-	
 	public Navigation(Odometer odo) {
-		this.odo = odo;
-		this.robot = odo.getTwoWheeledRobot();
+		this.odometer = odo;
+
+		NXTRegulatedMotor[] motors = this.odometer.getMotors();
+		this.leftMotor = motors[0];
+		this.rightMotor = motors[1];
+
+		// set acceleration
+		this.leftMotor.setAcceleration(ACCELERATION);
+		this.rightMotor.setAcceleration(ACCELERATION);
 	}
 
-	public void run() {
-		long updateStart, updateEnd;
+	/*
+	 * Functions to set the motor speeds jointly
+	 */
+	public void setSpeeds(float lSpd, float rSpd) {
+		this.leftMotor.setSpeed(lSpd);
+		this.rightMotor.setSpeed(rSpd);
+		if (lSpd < 0)
+			this.leftMotor.backward();
+		else
+			this.leftMotor.forward();
+		if (rSpd < 0)
+			this.rightMotor.backward();
+		else
+			this.rightMotor.forward();
+	}
 
-		while (true) {
-			updateStart = System.currentTimeMillis();
+	public void setSpeeds(int lSpd, int rSpd) {
+		this.leftMotor.setSpeed(lSpd);
+		this.rightMotor.setSpeed(rSpd);
+		if (lSpd < 0)
+			this.leftMotor.backward();
+		else
+			this.leftMotor.forward();
+		if (rSpd < 0)
+			this.rightMotor.backward();
+		else
+			this.rightMotor.forward();
+	}
 
-			x = odometer.getX();
-			y = odometer.getY();
-			double currentTheta = odometer.getTheta();
+	/*
+	 * Float the two motors jointly
+	 */
+	public void setFloat() {
+		this.leftMotor.stop();
+		this.rightMotor.stop();
+		this.leftMotor.flt(true);
+		this.rightMotor.flt(true);
+	}
 
-			// we want theta in the range of -180 to 180
-			if (currentTheta > 180) {
-				odometer.setTheta(currentTheta - 360);
-			} else if (currentTheta < -180) {
-				odometer.setTheta(currentTheta + 360);
-			}
-
-			// determines which coordinate to target
-			if (coord4.getIsVisited()) {
-				leftMotor.stop();
-				rightMotor.stop();
-				break;
-			} else if (coord3.getIsVisited()) {
-				setTarget(coord4);
-				coord4.setIsVisited(x, y);
-			} else if (coord2.getIsVisited()) {
-				setTarget(coord3);
-				coord3.setIsVisited(x, y);
-			} else if (coord1.getIsVisited()) {
-				setTarget(coord2);
-				coord2.setIsVisited(x, y);
-			} else {
-				setTarget(coord1);
-				coord1.setIsVisited(x, y);
-			}
-
-			travelTo(xTarget, yTarget); // travel to the target set just above
-
-			updateEnd = System.currentTimeMillis();
-			if (updateEnd - updateStart < NAVIGATION_PERIOD) {
-				try {
-					Thread.sleep(NAVIGATION_PERIOD - (updateEnd - updateStart));
-				} catch (InterruptedException e) {
-					// there is nothing to be done here because it is not
-					// expected that the odometer will be interrupted by
-					// another thread
-				}
-			}
+	/*
+	 * TravelTo function which takes as arguments the x and y position in cm
+	 * Will travel to designated position, while constantly updating it's
+	 * heading
+	 */
+	public void travelTo(double x, double y) {
+		double minAng;
+		while (Math.abs(x - odometer.getX()) > CM_ERR
+				|| Math.abs(y - odometer.getY()) > CM_ERR) {
+			minAng = (Math.atan2(y - odometer.getY(), x - odometer.getX()))
+					* (180.0 / Math.PI);
+			minAng = 90 - minAng;
+			if (minAng < 0)
+				minAng += 360;
+			this.turnTo(minAng, false);
+			this.setSpeeds(FAST, FAST);
 		}
+		this.setSpeeds(0, 0);
 	}
 
-	
-	// USE THE FUNCTIONS setForwardSpeed and setRotationalSpeed from TwoWheeledRobot!
-	public void travelTo(double xTarget, double yTarget) {
+	/*
+	 * TurnTo function which takes an angle and boolean as arguments The boolean
+	 * controls whether or not to stop the motors when the turn is completed
+	 */
+	public void turnTo(double angle, boolean stop) {
 
-		// Determine whether to turn or not
-		double xDiff = xTarget - this.x;
-		double yDiff = yTarget - this.y;
-		double targetTheta = Math.toDegrees(Math.atan2(yDiff, xDiff));
+		double error = angle - this.odometer.getTheta();
 
-		// change in theta is target minus current
-		double deltaTheta = targetTheta - odometer.getTheta();
+		int decider;
 
-		// if the heading is off by more than acceptable error, we must correct
-		if (Math.abs(deltaTheta) > ERROR_THRESHOLD) {
-			turnTo(targetTheta);
+		if (error < -180.0) {
+			decider = 0; // CW
+		} else if (error < 0.0) {
+			decider = 1; // CCW
+		} else if (error > 180.0) {
+			decider = 2; // CCW
 		} else {
-			
-			robot.setForwardSpeed(FORWARD_SPEED);
-			
-			/*leftMotor.setSpeed(FORWARD_SPEED);
-			rightMotor.setSpeed(FORWARD_SPEED);
-			leftMotor.forward();
-			rightMotor.forward();*/
+			decider = 3; // CW
 		}
-	}
 
-	
-	// USE THE FUNCTIONS setForwardSpeed and setRotationalSpeed from TwoWheeledRobot!
-	public void turnTo(double targetTheta) {
-		double currentTheta = odometer.getTheta();
-		double rotate = targetTheta - currentTheta;
-
-		// If at a point, turn to in place
-		if (coord0.isAtPoint(x, y) || coord1.isAtPoint(x, y)
-				|| coord2.isAtPoint(x, y) || coord3.isAtPoint(x, y)
-				|| coord4.isAtPoint(x, y)) {
-
-			// turn a minimal angle
-			if (rotate > 180) {
-				rotate -= 360;
-			} else if (rotate < -180) {
-				rotate += 360;
+		while (Math.abs(error) > DEG_ERR) {
+			error = angle - this.odometer.getTheta();
+			switch (decider) {
+			case 0:
+				this.setSpeeds(SLOW, -SLOW);// CW
+				break;
+			case 1:
+				this.setSpeeds(-SLOW, SLOW); // CCW
+				break;
+			case 2:
+				this.setSpeeds(-SLOW, SLOW); // CCW
+				break;
+			case 3:
+				this.setSpeeds(SLOW, -SLOW); // CW
+				break;
 			}
-
-			robot.setRotationSpeed(ROTATE_SPEED);
-			
-			/*leftMotor.setSpeed(ROTATE_SPEED);
-			rightMotor.setSpeed(ROTATE_SPEED);*/
-
-			leftMotor.rotate(-convertAngle(LEFT_RADIUS, WHEEL_BASE, rotate),
-					true);
-			rightMotor.rotate(convertAngle(RIGHT_RADIUS, WHEEL_BASE, rotate),
-					false);
 		}
-		// turn while travelling by adjusting motor speeds
-		else if (rotate > 0) {
-			leftMotor.setSpeed(TURNING_SPEED); // correct left
-			rightMotor.setSpeed(FORWARD_SPEED);
 
-		} else if (rotate < 0) {
-			leftMotor.setSpeed(FORWARD_SPEED);
-			rightMotor.setSpeed(TURNING_SPEED); // correct right
+		if (stop) {
+			this.setSpeeds(0, 0);
 		}
 	}
 
-	// return true if another thread has called travelTo() or turnTo()
-	// and has yet to return
-	public boolean isNavigating() {
-		return false;
-	}
+	/*
+	 * Go foward a set distance in cm
+	 */
+	public void goForward(double distance) {
+		this.travelTo(Math.cos(Math.toRadians(this.odometer.getTheta()))
+				* distance, Math.cos(Math.toRadians(this.odometer.getTheta()))
+				* distance);
 
-	// gets the x and y targets from the specified coordinates
-	public void setTarget(Coordinate coord) {
-		xTarget = coord.getX();
-		yTarget = coord.getY();
 	}
-
-	// returns the number of degrees the wheels must turn over a distance
-	private static int convertDistance(double radius, double distance) {
-		return (int) ((180.0 * distance) / (Math.PI * radius));
-	}
-
-	// returns the number of degrees to turn a certain angle
-	private static int convertAngle(double radius, double width, double angle) {
-		return convertDistance(radius, Math.PI * width * angle / 360.0);
-	}
-
 }
-	

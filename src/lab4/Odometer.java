@@ -1,5 +1,6 @@
 package lab4;
 
+import lejos.nxt.NXTRegulatedMotor;
 import lejos.util.Timer;
 import lejos.util.TimerListener;
 
@@ -7,16 +8,18 @@ public class Odometer implements TimerListener {
 	public static final int DEFAULT_PERIOD = 25;
 	private TwoWheeledRobot robot;
 	private Timer odometerTimer;
-	private Navigation nav;
 	// position data
 	private Object lock;
 	private double x, y, theta;
 	private double [] oldDH, dDH;
 	
+	private NXTRegulatedMotor leftMotor, rightMotor;
+	
 	public Odometer(TwoWheeledRobot robot, int period, boolean start) {
-		// initialise variables
+		// initialize variables
 		this.robot = robot;
-		this.nav = new Navigation(this);
+		this.leftMotor = robot.getLeftMotor();
+		this.rightMotor = robot.getRightMotor();
 		odometerTimer = new Timer(period, this);
 		x = 0.0;
 		y = 0.0;
@@ -70,17 +73,29 @@ public class Odometer implements TimerListener {
 	}
 	
 	public double getX(){
-		return x;
+		return this.x;
 	}
 	
 	public double getY(){
-		return y;
+		return this.y;
 	}
 	
 	public double getTheta(){
-		return theta;
+		return this.theta;
 	}
 	
+	public void setX(double x){
+		synchronized (lock) {
+			this.x = x;
+		}
+	}
+	
+	public void setY(double y){
+		synchronized (lock) {
+			this.y = y;
+		}
+	}
+
 	public void setTheta(double theta) {
 		synchronized (lock) {
 			this.theta = theta;
@@ -90,11 +105,7 @@ public class Odometer implements TimerListener {
 	public TwoWheeledRobot getTwoWheeledRobot() {
 		return robot;
 	}
-	
-	public Navigation getNavigation() {
-		return this.nav;
-	}
-	
+
 	// mutators
 	public void setPosition(double [] pos, boolean [] update) {
 		synchronized (lock) {
@@ -103,7 +114,17 @@ public class Odometer implements TimerListener {
 			if (update[2]) theta = pos[2];
 		}
 	}
-	
+
+	public NXTRegulatedMotor [] getMotors() {
+		return new NXTRegulatedMotor[] {this.leftMotor, this.rightMotor};
+	}
+	public NXTRegulatedMotor getLeftMotor() {
+		return this.leftMotor;
+	}
+	public NXTRegulatedMotor getRightMotor() {
+		return this.rightMotor;
+	}
+
 	// static 'helper' methods
 	public static double fixDegAngle(double angle) {		
 		if (angle < 0.0)
@@ -119,5 +140,5 @@ public class Odometer implements TimerListener {
 			return d;
 		else
 			return d - 360.0;
-	}
+	}	
 }
