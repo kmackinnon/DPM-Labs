@@ -12,8 +12,7 @@ import lejos.nxt.UltrasonicSensor;
 public class BlockDetector extends Thread {
 
 	ColorSensor cs = new ColorSensor(SensorPort.S1);
-	UltrasonicSensor us = new UltrasonicSensor(SensorPort.S2);
-	// TwoWheeledRobot robot = new TwoWheeledRobot(Motor.A, Motor.B);
+	UltrasonicSensor us;
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
 
@@ -32,15 +31,17 @@ public class BlockDetector extends Thread {
 	Color color;
 
 	private int distance, medianDistance;
+	
+	public BlockDetector(UltrasonicSensor us){
+		this.us = us;
+	}	
 
 	public void run() {
 
         int[] distanceArray = new int[5];
         
         int[] sortedArray = new int[5];
-
         Arrays.fill(distanceArray, 255);
-       
        
 		long timeStart, timeEnd;
 
@@ -50,7 +51,6 @@ public class BlockDetector extends Thread {
 		while (true) {
 
 			timeStart = System.currentTimeMillis();
-
 			distance = us.getDistance();
 			
 			for(int i = 0; i<distanceArray.length-1; i++){
@@ -73,21 +73,18 @@ public class BlockDetector extends Thread {
 				
 				double ratio = (double) redValue / (double) blueValue;
 				
-				if (ratio > 1.7) {
+				if (ratio > 1.8) {
 					isStyro = false;
 					isCinder = true;
 				} else {
 					isCinder = false;
 					isStyro = true;
 				}
-			}
-
-			else {
+			} else {
 				goStraight();
 
 				isCinder = false;
 				isStyro = false;
-
 			}
 
 			timeEnd = System.currentTimeMillis();
