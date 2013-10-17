@@ -26,8 +26,12 @@ public class BlockDetector extends Thread {
 
 	private boolean isStyro = false;
 	private boolean isCinder = false;
+	
+	int redValue, blueValue;
+	
+	Color color;
 
-	private int distance, colorValue, medianDistance;
+	private int distance, medianDistance;
 
 	public void run() {
 
@@ -38,7 +42,6 @@ public class BlockDetector extends Thread {
         Arrays.fill(distanceArray, 255);
        
        
-		cs.setFloodlight(Color.BLUE);
 		long timeStart, timeEnd;
 
 		leftMotor.forward();
@@ -56,32 +59,27 @@ public class BlockDetector extends Thread {
 			
 			distanceArray[distanceArray.length-1] = distance;
 			
-	        System.arraycopy(distanceArray,0,sortedArray,0,distanceArray.length);
-	        
+	        System.arraycopy(distanceArray, 0, sortedArray, 0, distanceArray.length);
 	        Arrays.sort(sortedArray);
 	        
 	        medianDistance = median(sortedArray);
-			
-			colorValue = cs.getRawLightValue();
 
 			if (medianDistance <= STOP_DISTANCE) {
 				stop();
+				color = cs.getColor();
 
-				if (Math.abs(colorValue - BLUE_STYRO) < COLOR_TOLERANCE) {
-					isStyro = true;
-					isCinder = false;
-				}
-
-				else if (Math.abs(colorValue - CINDER_BLOCK) < COLOR_TOLERANCE) {
+				redValue = color.getRed();
+				blueValue = color.getBlue();
+				
+				double ratio = (double) redValue / (double) blueValue;
+				
+				if (ratio > 1.7) {
+					isStyro = false;
 					isCinder = true;
-					isStyro = false;
-				}
-
-				else {
+				} else {
 					isCinder = false;
-					isStyro = false;
+					isStyro = true;
 				}
-
 			}
 
 			else {
@@ -105,13 +103,13 @@ public class BlockDetector extends Thread {
 
 		}
 	}
-
-	public int getColor() {
-		return colorValue;
+	
+	public int getBlue() {
+		return blueValue;
 	}
-
-	public int getDistance() {
-		return distance;
+	
+	public int getRed() {
+		return redValue;
 	}
 
 	public boolean getIsStyro(){
@@ -120,6 +118,10 @@ public class BlockDetector extends Thread {
 	
 	public boolean getIsCinder(){
 		return isCinder;
+	}
+	
+	public int getDistance() {
+		return distance;
 	}
 	
 	public void goStraight() {
@@ -133,7 +135,6 @@ public class BlockDetector extends Thread {
 		leftMotor.stop();
 		rightMotor.stop();
 	}
-	
 	
     public static int median(int[] m) {
         int middle = m.length/2;

@@ -26,23 +26,25 @@ public class LCDInfo implements TimerListener{
 	public void timedOut() { 
 		LCD.clear();
 		
-		LCD.drawString("Color: ", 0, 0);
-		LCD.drawString("Dista: ", 0, 1);
+		LCD.drawString("Blue: ", 0, 0);
+		LCD.drawString("Red: ", 0, 1);
+		LCD.drawString("Dist: ", 0, 2);
 		
-		LCD.drawInt(bd.getColor(), 8, 0);
-		LCD.drawInt(bd.getDistance(), 8, 1);
+		LCD.drawInt(bd.getBlue(), 6, 0);
+		LCD.drawInt(bd.getRed(), 6, 1);
+		LCD.drawInt(bd.getDistance(), 6, 2);
 		
 		
 		if(bd.getIsCinder() || bd.getIsStyro()){
-			LCD.drawString("Object Detected", 0, 2);
+			LCD.drawString("Object Detected", 0, 3);
 		}
 		
 		if(bd.getIsStyro()){
-			LCD.drawString("Block", 0, 3);
+			LCD.drawString("Block", 0, 4);
 		}
 		
 		else if(bd.getIsCinder()){
-			LCD.drawString("Not Block", 0, 3);
+			LCD.drawString("Not Block", 0, 4);
 		}
 		
 	}

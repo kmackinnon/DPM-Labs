@@ -13,14 +13,12 @@ public class Lab5 {
 	public static void main(String[] args) {
 
 		int buttonChoice;
-
 		BlockDetector bd = new BlockDetector();
 
 		new LCDInfo(bd);
 		
-		bd.run();
-
 		buttonChoice = Button.waitForAnyPress();
+		bd.run();
 
 		while (buttonChoice != Button.ID_ESCAPE);
 		System.exit(0);
