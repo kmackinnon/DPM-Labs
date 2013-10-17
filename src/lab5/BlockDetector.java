@@ -1,5 +1,7 @@
 package lab5;
 
+import java.util.Arrays;
+
 import lejos.nxt.ColorSensor;
 import lejos.nxt.ColorSensor.Color;
 import lejos.nxt.Motor;
@@ -22,13 +24,20 @@ public class BlockDetector extends Thread {
 	final int FORWARD_SPEED = 150;
 	final int STOP_DISTANCE = 7;
 
-	boolean isStyro = false;
-	boolean isCinder = false;
+	private boolean isStyro = false;
+	private boolean isCinder = false;
 
-	private int distance, colorValue;
+	private int distance, colorValue, medianDistance;
 
 	public void run() {
 
+        int[] distanceArray = new int[5];
+        
+        int[] sortedArray = new int[5];
+
+        Arrays.fill(distanceArray, 255);
+       
+       
 		cs.setFloodlight(Color.BLUE);
 		long timeStart, timeEnd;
 
@@ -40,9 +49,22 @@ public class BlockDetector extends Thread {
 			timeStart = System.currentTimeMillis();
 
 			distance = us.getDistance();
+			
+			for(int i = 0; i<distanceArray.length-1; i++){
+				distanceArray[i] = distanceArray[i+1];
+			}
+			
+			distanceArray[distanceArray.length-1] = distance;
+			
+	        System.arraycopy(distanceArray,0,sortedArray,0,distanceArray.length);
+	        
+	        Arrays.sort(sortedArray);
+	        
+	        medianDistance = median(sortedArray);
+			
 			colorValue = cs.getRawLightValue();
 
-			if (distance <= STOP_DISTANCE) {
+			if (medianDistance <= STOP_DISTANCE) {
 				stop();
 
 				if (Math.abs(colorValue - BLUE_STYRO) < COLOR_TOLERANCE) {
@@ -92,22 +114,14 @@ public class BlockDetector extends Thread {
 		return distance;
 	}
 
-	public String blockType() {
-
-		if (isStyro) {
-			return "Styrofoam";
-		}
-
-		else if (isCinder) {
-			return "Cinder";
-		}
-
-		else {
-			return "Neither";
-		}
-
+	public boolean getIsStyro(){
+		return isStyro;
 	}
-
+	
+	public boolean getIsCinder(){
+		return isCinder;
+	}
+	
 	public void goStraight() {
 		leftMotor.forward();
 		rightMotor.forward();
@@ -119,5 +133,16 @@ public class BlockDetector extends Thread {
 		leftMotor.stop();
 		rightMotor.stop();
 	}
+	
+	
+    public static int median(int[] m) {
+        int middle = m.length/2;
+        if (m.length%2 == 1) {
+            return m[middle];
+        } else {
+            return (m[middle-1] + m[middle]) / 2;
+        }
+    }
+	
 
 }

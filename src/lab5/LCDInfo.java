@@ -32,7 +32,18 @@ public class LCDInfo implements TimerListener{
 		LCD.drawInt(bd.getColor(), 8, 0);
 		LCD.drawInt(bd.getDistance(), 8, 1);
 		
-		LCD.drawString(bd.blockType(), 0, 2);
+		
+		if(bd.getIsCinder() || bd.getIsStyro()){
+			LCD.drawString("Object Detected", 0, 2);
+		}
+		
+		if(bd.getIsStyro()){
+			LCD.drawString("Block", 0, 3);
+		}
+		
+		else if(bd.getIsCinder()){
+			LCD.drawString("Not Block", 0, 3);
+		}
 		
 	}
 }
