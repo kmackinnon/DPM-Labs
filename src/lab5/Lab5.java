@@ -18,20 +18,15 @@ public class Lab5 {
 		TwoWheeledRobot patBot = new TwoWheeledRobot(Motor.A, Motor.B);
 		Odometer odo = new Odometer(patBot, true);
 		UltrasonicSensor us = new UltrasonicSensor(SensorPort.S2);
-
-
+		UltrasonicSensor us2 = new UltrasonicSensor(SensorPort.S2);
 		
 		USLocalizer usl = new USLocalizer(odo, us, USLocalizer.LocalizationType.FALLING_EDGE);
 
-		
-		
 		buttonChoice = Button.waitForAnyPress();
 
 		usl.doLocalization();
 		
-		Sound.beep();
-		
-		UltrasonicSensor us2 = new UltrasonicSensor(SensorPort.S2);
+		Sound.beep(); // just to indicate that we are going to begin block detection
 		
 		BlockDetector bd = new BlockDetector(us2);
 		
