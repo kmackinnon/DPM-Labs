@@ -11,19 +11,16 @@ import lejos.nxt.UltrasonicSensor;
 
 public class BlockDetector extends Thread {
 
+	public final Object lock = new Object(); // for blocking method
+	
 	ColorSensor cs = new ColorSensor(SensorPort.S1);
 	Color color;
 	UltrasonicSensor us;
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
 
-	private static final double LEFT_RADIUS = 2.1;
-	private static final double RIGHT_RADIUS = 2.1;
-	private static final double DEFAULT_WIDTH = 15.6;
-
 	private static final int TIME_PERIOD = 20;
 	private static final int FORWARD_SPEED = 150;
-	private static final int ROTATE_SPEED = 30;
 	private static final int STOP_DISTANCE = 7;
 
 	private boolean isStyro = false;
@@ -50,7 +47,7 @@ public class BlockDetector extends Thread {
 		while (true) {
 			timeStart = System.currentTimeMillis();
 			distance = us.getDistance();
-
+			
 			// shift each value to the left
 			for (int i = 0; i < distanceArray.length - 1; i++) {
 				distanceArray[i] = distanceArray[i + 1];
@@ -78,16 +75,14 @@ public class BlockDetector extends Thread {
 				} else {
 					isCinder = false;
 					isStyro = true;
-
-					backUp(); // to be able to collect the block, we back up
 				}
+				
 			} else {
 				goStraight();
-
 				isCinder = false;
 				isStyro = false;
 			}
-
+			
 			timeEnd = System.currentTimeMillis();
 			if (timeEnd - timeStart < TIME_PERIOD) {
 				try {
@@ -144,26 +139,9 @@ public class BlockDetector extends Thread {
 	}
 
 	public void backUp() {
-		leftMotor.setSpeed(-FORWARD_SPEED);
-		rightMotor.setSpeed(-FORWARD_SPEED);
-
-		leftMotor.rotate(convertDistance(LEFT_RADIUS, 15), true);
-		rightMotor.rotate(convertDistance(RIGHT_RADIUS, 15), false);
-
-		leftMotor.setSpeed(ROTATE_SPEED);
-		rightMotor.setSpeed(ROTATE_SPEED);
-
-		leftMotor.rotate(convertAngle(LEFT_RADIUS, DEFAULT_WIDTH, -90.0), true);
-		rightMotor.rotate(-convertAngle(RIGHT_RADIUS, DEFAULT_WIDTH, -90.0),
-				false);
+		leftMotor.setSpeed(FORWARD_SPEED);
+		rightMotor.setSpeed(FORWARD_SPEED);
+		leftMotor.backward();
+		rightMotor.backward();
 	}
-
-	private static int convertDistance(double radius, double distance) {
-		return (int) ((180.0 * distance) / (Math.PI * radius));
-	}
-
-	private static int convertAngle(double radius, double width, double angle) {
-		return convertDistance(radius, Math.PI * width * angle / 360.0);
-	}
-
 }

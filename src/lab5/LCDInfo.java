@@ -1,4 +1,5 @@
 package lab5;
+
 /*
  * Keith MacKinnon (260460985)
  * Takeshi Musgrave (260527485)
@@ -9,43 +10,41 @@ import lejos.nxt.LCD;
 import lejos.util.Timer;
 import lejos.util.TimerListener;
 
-public class LCDInfo implements TimerListener{
+public class LCDInfo implements TimerListener {
 	public static final int LCD_REFRESH = 100;
 	private Timer lcdTimer;
 	BlockDetector bd;
 	USLocalizer usl;
-	
+
 	public LCDInfo(BlockDetector bd) {
 		this.lcdTimer = new Timer(LCD_REFRESH, this);
-		
+
 		this.bd = bd;
-		
+
 		// start the timer
 		lcdTimer.start();
 	}
-	
-	public void timedOut() { 
+
+	public void timedOut() {
 		LCD.clear();
-		
+
 		LCD.drawString("Blue: ", 0, 0);
 		LCD.drawString("Red: ", 0, 1);
 		LCD.drawString("Dist: ", 0, 2);
-		
+
 		LCD.drawInt(bd.getBlue(), 6, 0);
 		LCD.drawInt(bd.getRed(), 6, 1);
-		LCD.drawInt(bd.getDistance(), 6, 2);		
-		
-		if(bd.getIsCinder() || bd.getIsStyro()){
+		LCD.drawInt(bd.getDistance(), 6, 2);
+
+		if (bd.getIsCinder() || bd.getIsStyro()) {
 			LCD.drawString("Object Detected", 0, 3);
 		}
-		
-		if(bd.getIsStyro()){
+
+		if (bd.getIsStyro()) {
 			LCD.drawString("Block", 0, 4);
-		}
-		
-		else if(bd.getIsCinder()){
+		} else if (bd.getIsCinder()) {
 			LCD.drawString("Not Block", 0, 4);
 		}
-		
+
 	}
 }
