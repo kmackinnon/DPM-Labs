@@ -15,11 +15,10 @@ public class LCDInfo implements TimerListener{
 	BlockDetector bd;
 	USLocalizer usl;
 	
-	public LCDInfo(BlockDetector bd, USLocalizer usl) {
+	public LCDInfo(BlockDetector bd) {
 		this.lcdTimer = new Timer(LCD_REFRESH, this);
 		
 		this.bd = bd;
-		this.usl = usl;
 		
 		// start the timer
 		lcdTimer.start();
@@ -31,13 +30,10 @@ public class LCDInfo implements TimerListener{
 		LCD.drawString("Blue: ", 0, 0);
 		LCD.drawString("Red: ", 0, 1);
 		LCD.drawString("Dist: ", 0, 2);
-		LCD.drawString("LDist: ", 0, 3);
 		
 		LCD.drawInt(bd.getBlue(), 6, 0);
 		LCD.drawInt(bd.getRed(), 6, 1);
-		LCD.drawInt(bd.getDistance(), 6, 2);
-		LCD.drawInt(usl.getCurrentDistance(), 7, 3);
-		
+		LCD.drawInt(bd.getDistance(), 6, 2);		
 		
 		if(bd.getIsCinder() || bd.getIsStyro()){
 			LCD.drawString("Object Detected", 0, 3);

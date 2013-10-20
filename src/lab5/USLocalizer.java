@@ -1,4 +1,5 @@
 package lab5;
+
 /*
  * Keith MacKinnon (260460985)
  * Takeshi Musgrave (260527485)
@@ -13,8 +14,8 @@ public class USLocalizer {
 	};
 
 	public final static double ROTATION_SPEED = 30;
-	public final static long TIME_PERIOD = 50; // delay used in
-												// getFilteredData()
+	public final static long TIME_PERIOD = 50; // delay to getFilteredData()
+
 	private Odometer odo;
 	private TwoWheeledRobot robot;
 	private UltrasonicSensor us;
@@ -35,7 +36,6 @@ public class USLocalizer {
 		this.us = us;
 		this.locType = locType;
 		this.nav = new Navigation(this.odo);
-
 	}
 
 	public void doLocalization() {
@@ -121,11 +121,11 @@ public class USLocalizer {
 		// find x and y positions based on perpendicular distances from walls
 		nav.turnTo(180, true);
 		currentDistance = getFilteredData();
-		odo.setY(currentDistance - 23); //minus 30 + 7
+		odo.setY(currentDistance - 23); // minus 30 + 7
 
 		nav.turnTo(270, true);
 		currentDistance = getFilteredData();
-		odo.setX(currentDistance - 25); //minus 30 + 5
+		odo.setX(currentDistance - 25); // minus 30 + 5
 
 		// go to a position near 0,0 which allows for light localization
 		nav.travelTo(0, 0);
@@ -236,7 +236,6 @@ public class USLocalizer {
 				break;
 			}
 		}
-
 	}
 
 	private int getFilteredData() {
