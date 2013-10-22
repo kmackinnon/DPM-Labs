@@ -41,7 +41,7 @@ public class Scan extends Thread {
 		this.us = us;
 		this.cs = new ColorSensor(SensorPort.S1);
 
-		usMotor.setSpeed(20);
+		usMotor.setSpeed(40);
 	}
 
 	public void run() {
@@ -133,7 +133,7 @@ public class Scan extends Thread {
 		}
 
 		if (isObject) {
-			usMotor.setSpeed(20);
+			usMotor.setSpeed(25);
 			turnSensor(90);
 			turn(-90);
 		}

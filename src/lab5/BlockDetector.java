@@ -71,8 +71,6 @@ public class BlockDetector extends Thread {
 
 				if (isStyro) {
 					grabBlock();
-					doneForNow = true;
-					return;
 				} else {
 					break;
 				}
@@ -196,6 +194,10 @@ public class BlockDetector extends Thread {
 		goSetDistance(10);
 		turn(90);
 		goSetDistance(10);
+		
+		while(true){
+			goForward();
+		}
 	}
 
 	public void goSetDistance(double distance) {

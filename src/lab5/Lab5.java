@@ -55,14 +55,11 @@ public class Lab5 {
 			if (scan.isDoneForNow()) {
 				bd.doStuffRun();
 
-				if (bd.isDoneForNow() && bd.getIsStyro()) {
-					break;
-				}
 			}
 		}
 
-		while (buttonChoice != Button.ID_ESCAPE)
+		/*while (buttonChoice != Button.ID_ESCAPE)
 			;
-		System.exit(0);
+		System.exit(0);*/
 	}
 }
