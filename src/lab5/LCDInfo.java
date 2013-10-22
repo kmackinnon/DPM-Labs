@@ -16,12 +16,14 @@ public class LCDInfo implements TimerListener {
 	private Timer lcdTimer;
 	BlockDetector bd;
 	UltrasonicSensor us;
+	Scan scan;
 
-	public LCDInfo(BlockDetector bd, UltrasonicSensor us) {
+	public LCDInfo(BlockDetector bd, Scan scan, UltrasonicSensor us) {
 		this.lcdTimer = new Timer(LCD_REFRESH, this);
 
 		this.us = us;
 		this.bd = bd;
+		this.scan = scan;
 
 		// start the timer
 		lcdTimer.start();
@@ -47,6 +49,12 @@ public class LCDInfo implements TimerListener {
 		} else if (bd.getIsCinder()) {
 			LCD.drawString("Not Block", 0, 4);
 		}
+		
+		
+		LCD.drawString("X: ", 0, 5);
+		LCD.drawString("Y: ", 0, 6);
+		LCD.drawInt((int)scan.odometer.getX(), 4, 5);
+		LCD.drawInt((int)scan.odometer.getY(), 4, 6);
 
 	}
 }

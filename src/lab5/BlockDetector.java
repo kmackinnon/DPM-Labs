@@ -9,62 +9,76 @@ import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.UltrasonicSensor;
 
-public class BlockDetector extends Thread{
+public class BlockDetector extends Thread {
 
 	public final Object lock = new Object(); // for blocking method
 
-	ColorSensor cs = new ColorSensor(SensorPort.S1);
+	ColorSensor cs;
 	Color color;
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
 	UltrasonicSensor us;
+	Odometer odo;
 
 	private static final int TIME_PERIOD = 20;
 	private static final int FORWARD_SPEED = 150;
 	private static final int STOP_DISTANCE = 7;
 	private static final double RIGHT_RADIUS = 2.1;
 	private static final double LEFT_RADIUS = 2.1;
-	public static final double WIDTH = 15.6;
-	
+	private static final double WIDTH = 15.6;
+	private static final double CM_ERR = 1.5;
+
 	private boolean isStyro = false;
 	private boolean isCinder = false;
+	private boolean doneForNow;
 
 	private int redValue, blueValue;
-	
+	private double xInit, yInit;
+
 	private int distance, medianDistance;
-	
+
 	int[] distanceArray = new int[5];
 	int[] sortedArray = new int[5];
 
-	public BlockDetector(UltrasonicSensor us) {
+	public BlockDetector(Odometer odo, UltrasonicSensor us) {
+		this.odo = odo;
 		this.us = us;
+		this.cs = new ColorSensor(SensorPort.S1);
 	}
 
 	public void run() {
-		
+
+	}
+
+	public void doStuffRun() {
+
+		doneForNow = false;
+
 		long timeStart, timeEnd;
-		
+
+		xInit = odo.getX();
+		yInit = odo.getY();
+		Arrays.fill(distanceArray, 255);
 
 		while (true) {
 			timeStart = System.currentTimeMillis();
-			
-			//setMedian();
-			
-			if (us.getDistance() <= STOP_DISTANCE) {
+
+			setMedian();
+
+			if (medianDistance <= STOP_DISTANCE) {
 				stop();
-				
 				setBlockType();
 
-				if(isStyro){
+				if (isStyro) {
 					grabBlock();
+					doneForNow = true;
+					return;
+				} else {
+					break;
 				}
-				
-				else{
-					stop();
-				}
-				
+
 			} else {
-				goStraight();
+				goForward();
 				isCinder = false;
 				isStyro = false;
 			}
@@ -80,6 +94,15 @@ public class BlockDetector extends Thread{
 				}
 			}
 		}
+
+		while (isNotThereYet(xInit, yInit)) {
+			goBackward();
+		}
+
+		stop();
+		doneForNow = true;
+		return;
+
 	}
 
 	public int getBlue() {
@@ -90,9 +113,16 @@ public class BlockDetector extends Thread{
 		return redValue;
 	}
 	
-	public void setBlockType(){
+	public boolean getIsStyro() {
+		return isStyro;
+	}
+
+	public boolean getIsCinder() {
+		return isCinder;
+	}
+
+	public void setBlockType() {
 		color = cs.getColor();
-		
 		redValue = color.getRed();
 		blueValue = color.getBlue();
 
@@ -106,18 +136,14 @@ public class BlockDetector extends Thread{
 			isStyro = true;
 		}
 	}
-
-	public boolean getIsStyro() {
-		return isStyro;
+	
+	public int getMedian() {
+		synchronized (lock) {
+			return medianDistance;
+		}
 	}
 
-	public boolean getIsCinder() {
-		return isCinder;
-	}
-	
-	
-/*private void setMedian(){
-		
+	private void setMedian() {
 		distance = us.getDistance();
 
 		// shift each value to the left
@@ -127,37 +153,31 @@ public class BlockDetector extends Thread{
 
 		distanceArray[distanceArray.length - 1] = distance;
 
-		System.arraycopy(distanceArray, 0, sortedArray, 0,
-				distanceArray.length);
+		System.arraycopy(distanceArray, 0, sortedArray, 0, distanceArray.length);
 		Arrays.sort(sortedArray);
-			
-		medianDistance = median(sortedArray);	
 
+		medianDistance = median(sortedArray);
 	}
-	
-public int getMedian(){
-	
-	synchronized(lock){
-	
-		return medianDistance;
-	
-	}
-}
 
-
-private int median(int[] m) {
-	
+	private int median(int[] m) {
 		int middle = m.length / 2;
 		if (m.length % 2 == 1) {
 			return m[middle];
 		} else {
 			return (m[middle - 1] + m[middle]) / 2;
 		}
-}*/
+	}
 
-	public void goStraight() {
+	public void goForward() {
 		leftMotor.forward();
 		rightMotor.forward();
+		leftMotor.setSpeed(FORWARD_SPEED);
+		rightMotor.setSpeed(FORWARD_SPEED);
+	}
+
+	public void goBackward() {
+		leftMotor.backward();
+		rightMotor.backward();
 		leftMotor.setSpeed(FORWARD_SPEED);
 		rightMotor.setSpeed(FORWARD_SPEED);
 	}
@@ -167,34 +187,27 @@ private int median(int[] m) {
 		rightMotor.stop();
 	}
 
-
-	public void grabBlock(){
+	public void grabBlock() {
 		goSetDistance(-10); // get the robot to move backwards so that it can
 		// then either move around a wooden block or adjust
 		// its position to push a styrofoam block
-		
+
 		turn(-90);
-		
 		goSetDistance(10);
-		
 		turn(90);
-		
 		goSetDistance(10);
 	}
-	
-	
+
 	public void goSetDistance(double distance) {
 		leftMotor.setSpeed(-FORWARD_SPEED);
 		rightMotor.setSpeed(-FORWARD_SPEED);
 		rightMotor.rotate(convertDistance(RIGHT_RADIUS, distance), true);
 		leftMotor.rotate(convertDistance(LEFT_RADIUS, distance), false);
 	}
-	
-	public void turn(double angle){
-		
+
+	public void turn(double angle) {
 		leftMotor.rotate(convertAngle(LEFT_RADIUS, WIDTH, angle), true);
 		rightMotor.rotate(-convertAngle(RIGHT_RADIUS, WIDTH, angle), false);
-		
 	}
 
 	// helper method to convert the distance each wheel must travel
@@ -206,4 +219,14 @@ private int median(int[] m) {
 	private static int convertAngle(double radius, double width, double angle) {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
+
+	public boolean isNotThereYet(double x, double y) {
+		return Math.abs(x - odo.getX()) > CM_ERR
+				|| Math.abs(y - odo.getY()) > CM_ERR;
+	}
+
+	public boolean isDoneForNow() {
+		return doneForNow;
+	}
+	
 }

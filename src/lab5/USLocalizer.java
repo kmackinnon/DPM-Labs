@@ -107,9 +107,9 @@ public class USLocalizer {
 
 			// calculates the corrected angle
 			if (angleA > angleB) {
-				deltaTheta = 232.5 - ((angleA + angleB) / 2);
+				deltaTheta = 225 - ((angleA + angleB) / 2); 
 			} else {
-				deltaTheta = 52.5 - ((angleA + angleB) / 2);
+				deltaTheta = 45 - ((angleA + angleB) / 2); 
 			}
 
 			// update the odometer position (example to follow:)
@@ -121,7 +121,7 @@ public class USLocalizer {
 		// find x and y positions based on perpendicular distances from walls
 		nav.turnTo(180, true);
 		currentDistance = getFilteredData();
-		odo.setY(currentDistance - 23); // minus 30 + 7
+		odo.setY(currentDistance - 25); // minus 30 + 7
 
 		nav.turnTo(270, true);
 		currentDistance = getFilteredData();
