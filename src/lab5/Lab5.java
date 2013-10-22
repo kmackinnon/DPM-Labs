@@ -1,5 +1,11 @@
 package lab5;
 
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
+
 import lejos.nxt.Button;
 import lejos.nxt.LCD;
 import lejos.nxt.Motor;
@@ -35,31 +41,27 @@ public class Lab5 {
 		} while (buttonChoice != Button.ID_LEFT
 				&& buttonChoice != Button.ID_RIGHT);
 
+		// for testing, we added this to avoid localizing each time
 		if (buttonChoice == Button.ID_LEFT) {
 			usLoc.doLocalization();
 			Sound.beep(); // just to indicate beginning of block detection
 		}
 
 		Scan scan = new Scan(odo, us);
-
 		BlockDetector bd = new BlockDetector(odo, us);
 		new LCDInfo(bd, scan, us);
 
-		// print block detection information to screen
+		// begin the threads
 		scan.start();
 		bd.start();
 
 		while (true) {
 			scan.doStuffRun();
 
-			if (scan.isDoneForNow()) {
+			// if a scanning routine needs to perform block detection
+			if (scan.getIsDone()) {
 				bd.doStuffRun();
-
 			}
 		}
-
-		/*while (buttonChoice != Button.ID_ESCAPE)
-			;
-		System.exit(0);*/
 	}
 }

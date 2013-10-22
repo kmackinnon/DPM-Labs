@@ -44,17 +44,18 @@ public class LCDInfo implements TimerListener {
 			LCD.drawString("Object Detected", 0, 3);
 		}
 
+		// display whether object is styrofoam or cinder block
 		if (bd.getIsStyro()) {
 			LCD.drawString("Block", 0, 4);
 		} else if (bd.getIsCinder()) {
 			LCD.drawString("Not Block", 0, 4);
 		}
-		
-		
+
+		// retrieve odometer information
 		LCD.drawString("X: ", 0, 5);
 		LCD.drawString("Y: ", 0, 6);
-		LCD.drawInt((int)scan.odometer.getX(), 4, 5);
-		LCD.drawInt((int)scan.odometer.getY(), 4, 6);
+		LCD.drawInt((int) scan.odometer.getX(), 4, 5);
+		LCD.drawInt((int) scan.odometer.getY(), 4, 6);
 
 	}
 }

@@ -1,5 +1,11 @@
 package lab5;
 
+/*
+ * Keith MacKinnon (260460985)
+ * Takeshi Musgrave (260527485)
+ * Fall 2013, DPM, Group 26
+ */
+
 import java.util.Arrays;
 
 import lejos.nxt.ColorSensor;
@@ -22,18 +28,17 @@ public class BlockDetector extends Thread {
 
 	private static final int TIME_PERIOD = 20;
 	private static final int FORWARD_SPEED = 150;
-	private static final int STOP_DISTANCE = 7;
+	private static final int STOP_DISTANCE = 7; // how far from block to stop
 	private static final double RIGHT_RADIUS = 2.1;
 	private static final double LEFT_RADIUS = 2.1;
 	private static final double WIDTH = 15.6;
-	private static final double CM_ERR = 1.5;
+	private static final double CM_ERR = 1.5; // allowed error in position
 
-	private boolean isStyro = false;
+	private boolean isStyro = false; // initialize to false
 	private boolean isCinder = false;
 	private boolean doneForNow;
 
-	private int redValue, blueValue;
-	private double xInit, yInit;
+	private int redValue, blueValue; // color readings
 
 	private int distance, medianDistance;
 
@@ -46,18 +51,13 @@ public class BlockDetector extends Thread {
 		this.cs = new ColorSensor(SensorPort.S1);
 	}
 
-	public void run() {
-
-	}
-
 	public void doStuffRun() {
-
 		doneForNow = false;
 
 		long timeStart, timeEnd;
 
-		xInit = odo.getX();
-		yInit = odo.getY();
+		double xInit = odo.getX(); // initial x position
+		double yInit = odo.getY(); // initial y position
 		Arrays.fill(distanceArray, 255);
 
 		while (true) {
@@ -65,9 +65,10 @@ public class BlockDetector extends Thread {
 
 			setMedian();
 
+			// stop if close to a block
 			if (medianDistance <= STOP_DISTANCE) {
 				stop();
-				setBlockType();
+				setBlockType(); // determine block type
 
 				if (isStyro) {
 					grabBlock();
@@ -103,6 +104,7 @@ public class BlockDetector extends Thread {
 
 	}
 
+	// accessors
 	public int getBlue() {
 		return blueValue;
 	}
@@ -110,7 +112,7 @@ public class BlockDetector extends Thread {
 	public int getRed() {
 		return redValue;
 	}
-	
+
 	public boolean getIsStyro() {
 		return isStyro;
 	}
@@ -119,6 +121,7 @@ public class BlockDetector extends Thread {
 		return isCinder;
 	}
 
+	// determines the type of a block through the use of color ratios
 	public void setBlockType() {
 		color = cs.getColor();
 		redValue = color.getRed();
@@ -134,13 +137,14 @@ public class BlockDetector extends Thread {
 			isStyro = true;
 		}
 	}
-	
+
 	public int getMedian() {
 		synchronized (lock) {
 			return medianDistance;
 		}
 	}
 
+	// moving window to set median distance
 	private void setMedian() {
 		distance = us.getDistance();
 
@@ -157,6 +161,7 @@ public class BlockDetector extends Thread {
 		medianDistance = median(sortedArray);
 	}
 
+	// calculates median of a sorted array
 	private int median(int[] m) {
 		int middle = m.length / 2;
 		if (m.length % 2 == 1) {
@@ -166,6 +171,7 @@ public class BlockDetector extends Thread {
 		}
 	}
 
+	// travel in a straight line indefinitely
 	public void goForward() {
 		leftMotor.forward();
 		rightMotor.forward();
@@ -173,6 +179,7 @@ public class BlockDetector extends Thread {
 		rightMotor.setSpeed(FORWARD_SPEED);
 	}
 
+	// travel backwards indefinitely
 	public void goBackward() {
 		leftMotor.backward();
 		rightMotor.backward();
@@ -180,26 +187,31 @@ public class BlockDetector extends Thread {
 		rightMotor.setSpeed(FORWARD_SPEED);
 	}
 
+	// stops the robot
 	public void stop() {
 		leftMotor.stop();
 		rightMotor.stop();
 	}
 
+	// method adjusts robot's position to capture the styrofoam block
 	public void grabBlock() {
 		goSetDistance(-10); // get the robot to move backwards so that it can
 		// then either move around a wooden block or adjust
 		// its position to push a styrofoam block
 
-		turn(-90);
+		turn(-90); // CCW
 		goSetDistance(10);
-		turn(90);
+		turn(90); // CW
 		goSetDistance(10);
-		
-		while(true){
+
+		// goes forward indefinitely as we didn't implement a method of
+		// travelling to corner properly
+		while (true) {
 			goForward();
 		}
 	}
 
+	// travels a specific distance
 	public void goSetDistance(double distance) {
 		leftMotor.setSpeed(-FORWARD_SPEED);
 		rightMotor.setSpeed(-FORWARD_SPEED);
@@ -207,6 +219,7 @@ public class BlockDetector extends Thread {
 		leftMotor.rotate(convertDistance(LEFT_RADIUS, distance), false);
 	}
 
+	// turns the robot
 	public void turn(double angle) {
 		leftMotor.rotate(convertAngle(LEFT_RADIUS, WIDTH, angle), true);
 		rightMotor.rotate(-convertAngle(RIGHT_RADIUS, WIDTH, angle), false);
@@ -222,6 +235,7 @@ public class BlockDetector extends Thread {
 		return convertDistance(radius, Math.PI * width * angle / 360.0);
 	}
 
+	// returns a boolean telling whether the robot is at target location
 	public boolean isNotThereYet(double x, double y) {
 		return Math.abs(x - odo.getX()) > CM_ERR
 				|| Math.abs(y - odo.getY()) > CM_ERR;
@@ -230,5 +244,5 @@ public class BlockDetector extends Thread {
 	public boolean isDoneForNow() {
 		return doneForNow;
 	}
-	
+
 }

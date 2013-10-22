@@ -1,4 +1,5 @@
 package lab5;
+
 /*
  * Keith MacKinnon (260460985)
  * Takeshi Musgrave (260527485)
@@ -7,12 +8,13 @@ package lab5;
 
 /*
  * File: Navigation.java
- * Written by: Sean Lawlor and Takeshi Musgrave, Keith MacKinnon
+ * Written by: Sean Lawlor
  * ECSE 211 - Design Principles and Methods, Head TA
  * Fall 2011
  * 
  * Movement control class (turnTo, travelTo, flt, localize)
  */
+
 import lejos.nxt.NXTRegulatedMotor;
 
 public class Navigation {
