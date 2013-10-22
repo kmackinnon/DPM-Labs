@@ -9,68 +9,60 @@ import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.UltrasonicSensor;
 
-public class BlockDetector extends Thread {
+public class BlockDetector extends Thread{
 
 	public final Object lock = new Object(); // for blocking method
 
 	ColorSensor cs = new ColorSensor(SensorPort.S1);
 	Color color;
-	UltrasonicSensor us;
 	NXTRegulatedMotor leftMotor = Motor.A;
 	NXTRegulatedMotor rightMotor = Motor.B;
+	UltrasonicSensor us;
 
 	private static final int TIME_PERIOD = 20;
 	private static final int FORWARD_SPEED = 150;
 	private static final int STOP_DISTANCE = 7;
 	private static final double RIGHT_RADIUS = 2.1;
 	private static final double LEFT_RADIUS = 2.1;
-
+	public static final double WIDTH = 15.6;
+	
 	private boolean isStyro = false;
 	private boolean isCinder = false;
 
 	private int redValue, blueValue;
+	
 	private int distance, medianDistance;
+	
+	int[] distanceArray = new int[5];
+	int[] sortedArray = new int[5];
 
 	public BlockDetector(UltrasonicSensor us) {
 		this.us = us;
 	}
 
 	public void run() {
-
-		int[] distanceArray = new int[5];
-		int[] sortedArray = new int[5];
-		Arrays.fill(distanceArray, 255); // initialize array with 255 values
-
+		
 		long timeStart, timeEnd;
-
-		leftMotor.forward();
-		rightMotor.forward();
+		
 
 		while (true) {
 			timeStart = System.currentTimeMillis();
-			distance = us.getDistance();
-
-			// shift each value to the left
-			for (int i = 0; i < distanceArray.length - 1; i++) {
-				distanceArray[i] = distanceArray[i + 1];
-			}
-
-			distanceArray[distanceArray.length - 1] = distance;
-
-			System.arraycopy(distanceArray, 0, sortedArray, 0,
-					distanceArray.length);
-			Arrays.sort(sortedArray);
-
-			medianDistance = median(sortedArray);
-
-			if (medianDistance <= STOP_DISTANCE) {
+			
+			//setMedian();
+			
+			if (us.getDistance() <= STOP_DISTANCE) {
 				stop();
 				
 				setBlockType();
 
-				backup(10); // get the robot to move backwards so that it can
-							// then either move around a wooden block or adjust
-							// its position to push a styrofoam block
+				if(isStyro){
+					grabBlock();
+				}
+				
+				else{
+					stop();
+				}
+				
 			} else {
 				goStraight();
 				isCinder = false;
@@ -122,10 +114,46 @@ public class BlockDetector extends Thread {
 	public boolean getIsCinder() {
 		return isCinder;
 	}
+	
+	
+/*private void setMedian(){
+		
+		distance = us.getDistance();
 
-	public int getDistance() {
-		return distance;
+		// shift each value to the left
+		for (int i = 0; i < distanceArray.length - 1; i++) {
+			distanceArray[i] = distanceArray[i + 1];
+		}
+
+		distanceArray[distanceArray.length - 1] = distance;
+
+		System.arraycopy(distanceArray, 0, sortedArray, 0,
+				distanceArray.length);
+		Arrays.sort(sortedArray);
+			
+		medianDistance = median(sortedArray);	
+
 	}
+	
+public int getMedian(){
+	
+	synchronized(lock){
+	
+		return medianDistance;
+	
+	}
+}
+
+
+private int median(int[] m) {
+	
+		int middle = m.length / 2;
+		if (m.length % 2 == 1) {
+			return m[middle];
+		} else {
+			return (m[middle - 1] + m[middle]) / 2;
+		}
+}*/
 
 	public void goStraight() {
 		leftMotor.forward();
@@ -139,21 +167,34 @@ public class BlockDetector extends Thread {
 		rightMotor.stop();
 	}
 
-	// calculates median of a sorted array
-	public static int median(int[] m) {
-		int middle = m.length / 2;
-		if (m.length % 2 == 1) {
-			return m[middle];
-		} else {
-			return (m[middle - 1] + m[middle]) / 2;
-		}
-	}
 
-	public void backup(double distance) {
+	public void grabBlock(){
+		goSetDistance(-10); // get the robot to move backwards so that it can
+		// then either move around a wooden block or adjust
+		// its position to push a styrofoam block
+		
+		turn(-90);
+		
+		goSetDistance(10);
+		
+		turn(90);
+		
+		goSetDistance(10);
+	}
+	
+	
+	public void goSetDistance(double distance) {
 		leftMotor.setSpeed(-FORWARD_SPEED);
 		rightMotor.setSpeed(-FORWARD_SPEED);
-		rightMotor.rotate(convertDistance(RIGHT_RADIUS, -distance), true);
-		leftMotor.rotate(convertDistance(LEFT_RADIUS, -distance), false);
+		rightMotor.rotate(convertDistance(RIGHT_RADIUS, distance), true);
+		leftMotor.rotate(convertDistance(LEFT_RADIUS, distance), false);
+	}
+	
+	public void turn(double angle){
+		
+		leftMotor.rotate(convertAngle(LEFT_RADIUS, WIDTH, angle), true);
+		rightMotor.rotate(-convertAngle(RIGHT_RADIUS, WIDTH, angle), false);
+		
 	}
 
 	// helper method to convert the distance each wheel must travel

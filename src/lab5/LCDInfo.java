@@ -7,6 +7,7 @@ package lab5;
  */
 
 import lejos.nxt.LCD;
+import lejos.nxt.UltrasonicSensor;
 import lejos.util.Timer;
 import lejos.util.TimerListener;
 
@@ -14,11 +15,12 @@ public class LCDInfo implements TimerListener {
 	public static final int LCD_REFRESH = 100;
 	private Timer lcdTimer;
 	BlockDetector bd;
-	USLocalizer usl;
+	UltrasonicSensor us;
 
-	public LCDInfo(BlockDetector bd) {
+	public LCDInfo(BlockDetector bd, UltrasonicSensor us) {
 		this.lcdTimer = new Timer(LCD_REFRESH, this);
 
+		this.us = us;
 		this.bd = bd;
 
 		// start the timer
@@ -34,7 +36,7 @@ public class LCDInfo implements TimerListener {
 
 		LCD.drawInt(bd.getBlue(), 6, 0);
 		LCD.drawInt(bd.getRed(), 6, 1);
-		LCD.drawInt(bd.getDistance(), 6, 2);
+		LCD.drawInt(us.getDistance(), 6, 2);
 
 		if (bd.getIsCinder() || bd.getIsStyro()) {
 			LCD.drawString("Object Detected", 0, 3);

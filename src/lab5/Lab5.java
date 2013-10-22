@@ -40,10 +40,20 @@ public class Lab5 {
 		}
 
 		UltrasonicSensor us2 = new UltrasonicSensor(SensorPort.S2);
-		BlockDetector bd = new BlockDetector(us2);
+		//UltrasonicInfo usInfo = new UltrasonicInfo(us2);
+
+		Scan scan = new Scan(odo,us2);
 		
-		new LCDInfo(bd); // print block detection information to screen
-		bd.run(); //begin the block detection thread
+		
+		 // print block detection information to screen
+		scan.run();
+		
+		UltrasonicSensor us3 = new UltrasonicSensor(SensorPort.S2);
+		
+		BlockDetector bd = new BlockDetector(us3);
+		new LCDInfo(bd, us3);
+		
+		bd.start();
 
 		while (buttonChoice != Button.ID_ESCAPE);
 		System.exit(0);
